@@ -230,6 +230,7 @@ export default {
             notice_Number: 0,
             abnormal_Number: 0,
             danger_Number: 0,
+            category_number: 0,
             showIndex: 0,
             showModal: false,
             options: ['風扇', '電線', '保險絲', '繼電器', '...'],
@@ -432,30 +433,36 @@ export default {
         },
         //更新狀態數字
         updateStatusNumber() {
-            this.normal_Number = this.details.filter(
-                (item) =>
-                    item.result === '正常' &&
-                    item.category === this.selectedOption &&
-                    item.time === this.uploadTime
-            ).length
-            this.notice_Number = this.details.filter(
-                (item) =>
-                    item.result === '注意' &&
-                    item.category === this.selectedOption &&
-                    item.time === this.uploadTime
-            ).length
-            this.abnormal_Number = this.details.filter(
-                (item) =>
-                    item.result === '異常' &&
-                    item.category === this.selectedOption &&
-                    item.time === this.uploadTime
-            ).length
-            this.danger_Number = this.details.filter(
-                (item) =>
-                    item.result === '危險' &&
-                    item.category === this.selectedOption &&
-                    item.time === this.uploadTime
-            ).length
+            // this.normal_Number = this.details.filter(
+            //     (item) =>
+            //         item.result === '正常' &&
+            //         item.category === this.selectedOption &&
+            //         item.time === this.uploadTime
+            // ).length            
+            // this.notice_Number = this.details.filter(
+            //     (item) =>
+            //         item.result === '注意' &&
+            //         item.category === this.selectedOption &&
+            //         item.time === this.uploadTime
+            // ).length
+            // this.abnormal_Number = this.details.filter(
+            //     (item) =>
+            //         item.result === '異常' &&
+            //         item.category === this.selectedOption &&
+            //         item.time === this.uploadTime
+            // ).length
+            // this.danger_Number = this.details.filter(
+            //     (item) =>
+            //         item.result === '危險' &&
+            //         item.category === this.selectedOption &&
+            //         item.time === this.uploadTime
+            // ).length
+
+            // this.normal_Number = this.category_number['正常']
+
+            // this.normal_Number = this.category_number[0]
+            // console.log(this.category_number[this.selectedOption]['正常'])
+
         },
         // 獲取 MongoDB 中的類別選項
         getCategories() {
@@ -496,12 +503,12 @@ export default {
         UpdatePageInformation() {
             // 在這裡可以發起 API 請求，獲取新頁碼對應的數據
             // 這裡只是一個示例，實際應用中需要根據情況進行相應的處理
-            console.log(this.selectedTab)
-            console.log(this.selectedOption)
-            console.log(this.nor_currentPage)
-            console.log(this.not_currentPage)
-            console.log(this.abn_currentPage)
-            console.log(this.dan_currentPage)
+            // console.log(this.selectedTab)
+            // console.log(this.selectedOption)
+            // console.log(this.nor_currentPage)
+            // console.log(this.not_currentPage)
+            // console.log(this.abn_currentPage)
+            // console.log(this.dan_currentPage)
             this.axios.post('/tsmcserver/page_information', {
                 result: this.selectedTab,
                 category: this.selectedOption,
@@ -510,8 +517,14 @@ export default {
                 abn_currentPage: this.abn_currentPage,
                 dan_currentPage: this.dan_currentPage
             }).then(response => {
-                this.details = response.data;
-                console.log(response.data); /*API回傳的資料*/
+                const { data, category_count } = response.data;
+                // 在這裡使用解析後的數據
+                console.log(data);
+                console.log(category_count);
+
+                this.details = data;
+                this.category_number = category_count;
+                // console.log(response.data); /*API回傳的資料*/
             }).catch(error => {
                 console.log(error);
             });
