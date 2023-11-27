@@ -280,20 +280,57 @@ def page_information():
         # 建立搜尋條件
         search_criteria = {"category": category, "result": result}
 
-        data1 = list(collection.find(projection={"_id": False}))
-        # print(data1)
-
         # 查詢並回傳結果
         data = list(
             collection.find(search_criteria, projection={"_id": False})
             .sort([("name", 1)])  # 依照 name 欄位升冪排序
             .skip(skip_count)
             .limit(18)  # 限制回傳筆數
-        )
-        
+        )        
         print("Filtered data:")
         for item in data:
             print(item)
+
+        if not data:
+            # 如果集合為空，返回一個特定值或錯誤訊息
+            return jsonify({"status": "error", "message": "集合為空"})
+        
+        for data_item in data:
+            # 獲取 X、Y 座標
+            x1 = int(data_item.get("coordinate", {}).get("xmin", 0))
+            y1 = int(data_item.get("coordinate", {}).get("ymin", 0))
+            x2 = int(data_item.get("coordinate", {}).get("xmax", 0))
+            y2 = int(data_item.get("coordinate", {}).get("ymax", 0))
+
+            # 獲取圖片路徑
+            image_path = data_item.get("image", "")
+
+            # 開啟圖片
+            original_image = Image.open(os.getcwd() + "/" + image_path)
+
+            # 創建一個可以繪製形狀的對象
+            draw = ImageDraw.Draw(original_image)
+
+            # 繪製方框
+            draw.rectangle([x1, y1, x2, y2], outline='red', width=5)
+
+            # 將圖像轉換為RGB模式
+            if original_image.mode == 'RGBA':
+                original_image = original_image.convert('RGB')
+
+            # 將圖像轉換為Base64字串
+            image_buffer = io.BytesIO()
+            original_image.save(image_buffer, format='JPEG')
+            image_base64 = base64.b64encode(image_buffer.getvalue()).decode()
+
+            data_item["time"] = data_item.get("time", "")
+            data_item["category"] = data_item.get("category", "")
+            data_item["max"] = round(float(data_item.get("temp", {}).get("max", 0)), 1)
+            data_item["avg"] = round(float(data_item.get("temp", {}).get("avg", 0)), 1)
+            data_item["min"] = round(float(data_item.get("temp", {}).get("min", 0)), 1)
+            data_item["result"] = data_item.get("result", "")
+            data_item["image"] = f"data:image/jpeg;base64,{image_base64}"
+            data_item["original_image"] = image_path
 
         return jsonify(data), 200
 

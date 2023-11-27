@@ -107,6 +107,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
+                    <div class="img_outside_container" v-else></div>  
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -134,6 +135,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
+                    <div class="img_outside_container" v-else></div>  
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -161,6 +163,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
+                    <div class="img_outside_container" v-else></div>  
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -188,6 +191,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
+                    <div class="img_outside_container" v-else></div>  
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -249,8 +253,8 @@ export default {
         this.GetTimeRecord()
 
         //API
-        this.GetToDo()
-        this.intervalId = setInterval(this.GetToDo, 1000)
+        // this.GetToDo()
+        // this.intervalId = setInterval(this.GetToDo, 1000)
 
         // 在 mounted 中加入獲取 MongoDB 類別選項的程式碼
         this.getCategories()
@@ -275,7 +279,7 @@ export default {
         GetToDo() {
             this.axios.get('/tsmcserver').then((res) => {
                 this.details = res.data
-                // console.log(this.details)
+                console.log(this.details)
             })
         },
         // 上傳圖片
@@ -318,7 +322,7 @@ export default {
                         // 或取時間紀錄
                         this.GetTimeRecord()
                         // 重新獲取數據或執行其他操作
-                        this.GetToDo()
+                        // this.GetToDo()
                         //更改if_detect狀態
                         this.toggleIfDetect()
                         // 開始定時檢查 if_detect 狀態
@@ -506,10 +510,12 @@ export default {
                 abn_currentPage: this.abn_currentPage,
                 dan_currentPage: this.dan_currentPage
             }).then(response => {
+                this.details = response.data;
                 console.log(response.data); /*API回傳的資料*/
             }).catch(error => {
                 console.log(error);
             });
+            this.updateStatusNumber()
         }
     }
 }
