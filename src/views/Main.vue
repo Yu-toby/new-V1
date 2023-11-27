@@ -94,22 +94,28 @@ import * as XLSX from 'xlsx'
                 <!-- 正常 -->
                 <div class="tab_container" id="nor_con" v-if="selectedTab === 'normal'">
                     <div class="img_outside_container" v-if="details && details.length > 0">
-                        <div 
+                        <div
                             v-for="(details, index) in details"
                             :src="details.image"
                             :key="index"
-                            @click="show(index)" 
+                            @click="show(index)"
                         >
-                        <SmallPicture
-                                    v-if="details.result === '正常' && details.category === selectedOption && details.time === uploadTime"
-                                    :src="details.image"
-                                    loading="lazy"
-                                ></SmallPicture>
-                        </div>                        
+                            <SmallPicture
+                                v-if="details.result === '正常' && details.category === selectedOption && details.time === uploadTime"
+                                :src="details.image"
+                                loading="lazy"
+                            ></SmallPicture>
+                        </div>
                     </div>
                     <div class="page">
                         <div class="example-pagination-block">
-                            <el-pagination background layout="prev, pager, next" :total="100" />
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="nor_totalPages"
+                                :current-page="nor_currentPage"
+                                @current-change="nor_handlePageChange"
+                            />
                         </div>
                     </div>
                 </div>
@@ -126,11 +132,17 @@ import * as XLSX from 'xlsx'
                                 v-if="details.result === '注意' && details.category === selectedOption && details.time === uploadTime"
                                 :src="details.image"
                             ></SmallPicture>
-                        </div>                        
+                        </div>
                     </div>
                     <div class="page">
                         <div class="example-pagination-block">
-                            <el-pagination background layout="prev, pager, next" :total="100" />
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="not_totalPages"
+                                :current-page="not_currentPage"
+                                @current-change="not_handlePageChange"
+                            />
                         </div>
                     </div>
                 </div>
@@ -147,11 +159,17 @@ import * as XLSX from 'xlsx'
                                 v-if="details.result === '異常' && details.category === selectedOption && details.time === uploadTime"
                                 :src="details.image"
                             ></SmallPicture>
-                        </div>                       
+                        </div>
                     </div>
                     <div class="page">
                         <div class="example-pagination-block">
-                            <el-pagination background layout="prev, pager, next" :total="100" />
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="abn_totalPages"
+                                :current-page="abn_currentPage"
+                                @current-change="abn_handlePageChange"
+                            />
                         </div>
                     </div>
                 </div>
@@ -168,11 +186,17 @@ import * as XLSX from 'xlsx'
                                 v-if="details.result === '危險' && details.category === selectedOption && details.time === uploadTime"
                                 :src="details.image"
                             ></SmallPicture>
-                        </div>                     
+                        </div>
                     </div>
                     <div class="page">
                         <div class="example-pagination-block">
-                            <el-pagination background layout="prev, pager, next" :total="100" />
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="dan_totalPages"
+                                :current-page="dan_currentPage"
+                                @current-change="dan_handlePageChange"
+                            />
                         </div>
                     </div>
                 </div>
@@ -210,6 +234,14 @@ export default {
             categories: [], // 新增用來存放 MongoDB 中的類別選項
             loading: 0,
             uploadTime: '',
+            nor_totalPages: 50,
+            not_totalPages: 50,
+            abn_totalPages: 50,
+            dan_totalPages: 50,
+            nor_currentPage: 1,
+            not_currentPage: 1,
+            abn_currentPage: 1,
+            dan_currentPage: 1,
         }
     },
     mounted() {
@@ -224,7 +256,7 @@ export default {
         this.getCategories()
 
         // 開始定時檢查 if_detect 狀態
-        this.startCheckingIfDetect();
+        this.startCheckingIfDetect()
     },
     beforeUnmount() {
         //API
@@ -243,97 +275,97 @@ export default {
         // 上傳圖片
         uploadFiles() {
             // 獲取上傳的文件
-            const fileInput = this.$refs.fileInput;
-            const files = fileInput.files;
+            const fileInput = this.$refs.fileInput
+            const files = fileInput.files
 
             // 檢查是否選擇了文件
             if (files.length === 0) {
-                alert('請選擇要上傳的文件');
-                return;
+                alert('請選擇要上傳的文件')
+                return
             }
 
             // 使用FormData來構建HTTP POST請求
-            const formData = new FormData();
+            const formData = new FormData()
 
             // 將每個選中的文件添加到FormData中
             for (let i = 0; i < files.length; i++) {
-                formData.append('image', files[i]);
+                formData.append('image', files[i])
             }
 
             // 當上傳過程開始時，將 loading 設置為 true
-            this.loading = true;
-            this.ifDetectStatus = 1;
+            this.loading = true
+            this.ifDetectStatus = 1
 
             // 執行上傳操作
             this.axios
                 .post('/tsmcserver', formData, {
                     headers: {
-                        'Content-Type': 'multipart/form-data', // 設定標頭
-                    },
+                        'Content-Type': 'multipart/form-data' // 設定標頭
+                    }
                 })
                 .then((response) => {
                     if (response.data.status === 'success') {
                         // 上傳成功，執行相應操作
-                        alert('上傳成功');
+                        alert('上傳成功')
                         // 清空選中的文件
-                        fileInput.value = '';
+                        fileInput.value = ''
                         // 或取時間紀錄
-                        this.GetTimeRecord();
+                        this.GetTimeRecord()
                         // 重新獲取數據或執行其他操作
-                        this.GetToDo();
+                        this.GetToDo()
                         //更改if_detect狀態
-                        this.toggleIfDetect();
+                        this.toggleIfDetect()
                         // 開始定時檢查 if_detect 狀態
-                        this.startCheckingIfDetect();
+                        this.startCheckingIfDetect()
                     } else {
                         // 上傳失敗，執行相應操作
-                        alert('上傳失敗');
-                        this.loading = false; // 上傳失敗時，重置 loading 為 false
-                        this.ifDetectStatus = 0; // 辨識失敗時，重置為未辨識
+                        alert('上傳失敗')
+                        this.loading = false // 上傳失敗時，重置 loading 為 false
+                        this.ifDetectStatus = 0 // 辨識失敗時，重置為未辨識
                     }
                 })
                 .catch((error) => {
                     // 上傳過程中出現錯誤
-                    console.error('上傳過程中出現錯誤：', error);
-                    this.loading = false; // 出現錯誤時，重置 loading 為 false
-                    this.ifDetectStatus = 0; // 辨識失敗時，重置為未辨識
-                });
+                    console.error('上傳過程中出現錯誤：', error)
+                    this.loading = false // 出現錯誤時，重置 loading 為 false
+                    this.ifDetectStatus = 0 // 辨識失敗時，重置為未辨識
+                })
         },
         // 切換 if_detect 狀態
         toggleIfDetect() {
             // 向後端發送POST請求來切換if_detect狀態
             this.axios.post('/tsmcserver/if_detect').then((res) => {
-            if (res.data.status === 'success') {
-            // 更新ifDetectStatus以反映新的狀態
-                this.ifDetectStatus = res.data.new_number;
+                if (res.data.status === 'success') {
+                    // 更新ifDetectStatus以反映新的狀態
+                    this.ifDetectStatus = res.data.new_number
 
-                // // 如果 if_detect 變成 0，則重置 loading 為 false
-                // if (res.data.new_number === 0) {
-                //     this.loading = false;
-                // }
-            } else {
-                console.error('if_detect切換失敗');
-            }
-            });
+                    // // 如果 if_detect 變成 0，則重置 loading 為 false
+                    // if (res.data.new_number === 0) {
+                    //     this.loading = false;
+                    // }
+                } else {
+                    console.error('if_detect切換失敗')
+                }
+            })
         },
         // 開始定時檢查 if_detect 狀態
         startCheckingIfDetect() {
             // 設定每秒執行一次 checkIfDetect 方法
-            this.ifDetectInterval = setInterval(this.checkIfDetect, 1000);
+            this.ifDetectInterval = setInterval(this.checkIfDetect, 1000)
         },
         // 停止定時檢查 if_detect 狀態
         stopCheckingIfDetect() {
-            clearInterval(this.ifDetectInterval);
-            this.getCategories();
-            this.GetTimeRecord();
+            clearInterval(this.ifDetectInterval)
+            this.getCategories()
+            this.GetTimeRecord()
         },
         // 向後端發送請求來獲取 if_detect 狀態
         checkIfDetect() {
             this.axios.get('/tsmcserver/if_detect').then((res) => {
-                console.log(res.data);
-                this.loading = res.data;
+                console.log(res.data)
+                this.loading = res.data
                 if (res.data === 0) {
-                    this.stopCheckingIfDetect();
+                    this.stopCheckingIfDetect()
                 }
                 // if (res.data.status === 'success') {
                 //     this.ifDetectStatus = res.data.new_number;
@@ -345,37 +377,39 @@ export default {
                 // } else {
                 //     console.error('if_detect 檢查失敗');
                 // }
-            });
+            })
         },
         //匯出excel檔案
         exportExcel() {
             try {
-                const now = new Date();
-                const year = now.getFullYear(); // 取得年份
-                const month = (now.getMonth() + 1).toString().padStart(2, '0'); // 取得月份，並補零
-                const day = now.getDate().toString().padStart(2, '0'); // 取得日期，並補零
+                const now = new Date()
+                const year = now.getFullYear() // 取得年份
+                const month = (now.getMonth() + 1).toString().padStart(2, '0') // 取得月份，並補零
+                const day = now.getDate().toString().padStart(2, '0') // 取得日期，並補零
 
-                const formattedDate = `${year}${month}${day}`; // 格式化日期為 "年-月-日"
+                const formattedDate = `${year}${month}${day}` // 格式化日期為 "年-月-日"
                 // console.log(this.details)
                 //整理資料以符合Excel格式
-                const data = [[`${formattedDate} — 台科大JDP Project —紅外線熱影像辨識報告`],
-                            ['檔名', '類別', '結果', '最大溫度', '平均溫度', '最小溫度']];
+                const data = [
+                    [`${formattedDate} — 台科大JDP Project —紅外線熱影像辨識報告`],
+                    ['檔名', '類別', '結果', '最大溫度', '平均溫度', '最小溫度']
+                ]
                 for (const item of this.details) {
-                    const parts = item.original_image.split("\\"); // 使用斜杠字符分割 URL
-                    const filename = parts[parts.length - 1]; // 提取最後一個部分，即文件名
-                data.push([filename, item.category, item.result, item.max, item.avg, item.min]);
-                }               
+                    const parts = item.original_image.split('\\') // 使用斜杠字符分割 URL
+                    const filename = parts[parts.length - 1] // 提取最後一個部分，即文件名
+                    data.push([filename, item.category, item.result, item.max, item.avg, item.min])
+                }
 
                 // 創建工作簿和工作表
-                const ws = XLSX.utils.aoa_to_sheet(data);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, '資料表');
+                const ws = XLSX.utils.aoa_to_sheet(data)
+                const wb = XLSX.utils.book_new()
+                XLSX.utils.book_append_sheet(wb, ws, '資料表')
 
                 // 步驟3: 生成Excel文件\
-                const filename = `${formattedDate}_紅外線熱影像辨識報告.xlsx`; // 生成檔案名稱
-                XLSX.writeFile(wb, filename);
+                const filename = `${formattedDate}_紅外線熱影像辨識報告.xlsx` // 生成檔案名稱
+                XLSX.writeFile(wb, filename)
             } catch (error) {
-                console.error('匯出至Excel失敗：', error);
+                console.error('匯出至Excel失敗：', error)
             }
         },
         //讀取時間紀錄
@@ -386,10 +420,30 @@ export default {
         },
         //更新狀態數字
         updateStatusNumber() {
-            this.normal_Number = this.details.filter((item) => item.result === '正常' && item.category === this.selectedOption && item.time === this.uploadTime).length
-            this.notice_Number = this.details.filter((item) => item.result === '注意' && item.category === this.selectedOption && item.time === this.uploadTime).length
-            this.abnormal_Number = this.details.filter((item) => item.result === '異常' && item.category === this.selectedOption && item.time === this.uploadTime).length
-            this.danger_Number = this.details.filter((item) => item.result === '危險' && item.category === this.selectedOption && item.time === this.uploadTime).length
+            this.normal_Number = this.details.filter(
+                (item) =>
+                    item.result === '正常' &&
+                    item.category === this.selectedOption &&
+                    item.time === this.uploadTime
+            ).length
+            this.notice_Number = this.details.filter(
+                (item) =>
+                    item.result === '注意' &&
+                    item.category === this.selectedOption &&
+                    item.time === this.uploadTime
+            ).length
+            this.abnormal_Number = this.details.filter(
+                (item) =>
+                    item.result === '異常' &&
+                    item.category === this.selectedOption &&
+                    item.time === this.uploadTime
+            ).length
+            this.danger_Number = this.details.filter(
+                (item) =>
+                    item.result === '危險' &&
+                    item.category === this.selectedOption &&
+                    item.time === this.uploadTime
+            ).length
         },
         // 獲取 MongoDB 中的類別選項
         getCategories() {
@@ -397,6 +451,40 @@ export default {
                 this.categories = res.data
             })
         },
+        // 監聽頁碼變化事件
+        nor_handlePageChange(newPage) {
+            // 將當前頁碼更新為新的頁碼
+            this.nor_currentPage = newPage
+
+            // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
+            this.fetchDataForPage(newPage)
+        },
+        not_handlePageChange(newPage) {
+            // 將當前頁碼更新為新的頁碼
+            this.not_currentPage = newPage
+
+            // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
+            this.fetchDataForPage(newPage)
+        },
+        abn_handlePageChange(newPage) {
+            // 將當前頁碼更新為新的頁碼
+            this.abn_currentPage = newPage
+
+            // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
+            this.fetchDataForPage(newPage)
+        },
+        dan_handlePageChange(newPage) {
+            // 將當前頁碼更新為新的頁碼
+            this.dan_currentPage = newPage
+
+            // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
+            this.fetchDataForPage(newPage)
+        },
+        fetchDataForPage(page) {
+            // 在這裡可以發起 API 請求，獲取新頁碼對應的數據
+            // 這裡只是一個示例，實際應用中需要根據情況進行相應的處理
+            console.log(`Fetching data for page ${page}`)
+        }
     }
 }
 </script>

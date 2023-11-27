@@ -5,10 +5,21 @@
                 background
                 layout="prev, pager, next"
                 :total="totalPages"
-                :current-page="currentPage"
-                @current-change="handlePageChange"
+                :current-page="currentPage1"
+                @current-change="handlePageChange1"
             />
-            <div>當前頁碼: {{ currentPage }}</div>
+            <div>當前頁碼: {{ currentPage1 }}</div>
+        </div>
+
+        <div class="example-pagination-block">
+            <el-pagination
+                background
+                layout="prev, pager, next"
+                :total="totalPages"
+                :current-page="currentPage2"
+                @current-change="handlePageChange2"
+            />
+            <div>當前頁碼: {{ currentPage2 }}</div>
         </div>
     </div>
 </template>
@@ -18,14 +29,22 @@ export default {
     data() {
         return {
             totalPages: 100, // 總頁數
-            currentPage: 1 // 當前頁碼
+            currentPage1: 1, // 當前頁碼
+            currentPage2: 1, // 當前頁碼
         }
     },
     methods: {
         // 監聽頁碼變化事件
-        handlePageChange(newPage) {
+        handlePageChange1(newPage) {
             // 將當前頁碼更新為新的頁碼
-            this.currentPage = newPage
+            this.currentPage1 = newPage
+
+            // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
+            this.fetchDataForPage(newPage)
+        },
+        handlePageChange2(newPage) {
+            // 將當前頁碼更新為新的頁碼
+            this.currentPage2 = newPage
 
             // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
             this.fetchDataForPage(newPage)
