@@ -10,17 +10,6 @@
             />
             <div>當前頁碼: {{ currentPage1 }}</div>
         </div>
-
-        <div class="example-pagination-block">
-            <el-pagination
-                background
-                layout="prev, pager, next"
-                :total="totalPages"
-                :current-page="currentPage2"
-                @current-change="handlePageChange2"
-            />
-            <div>當前頁碼: {{ currentPage2 }}</div>
-        </div>
     </div>
 </template>
 

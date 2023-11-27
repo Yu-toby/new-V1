@@ -34,7 +34,7 @@ import * as XLSX from 'xlsx'
                 <div id="status"></div>
             </div>
             <div class="dropdown item" id="drop-down-menu">
-                <select v-model="selectedOption" @change="updatePieChart(); getCategories()">
+                <select v-model="selectedOption" @change="getCategories(); updateStatusNumber(); UpdatePageInformation()">
                     <option value disabled selected>請選擇類別</option>
                     <option
                         v-for="(category, index) in categories"
@@ -63,25 +63,25 @@ import * as XLSX from 'xlsx'
         <div class="content">
             <div>
                 <ul class="nav nav-tabs nav-justified">
-                    <li class="nav-item" id="normal" @click="selectedTab = 'normal'">
+                    <li class="nav-item" id="normal" @click="selectedTab = '正常'; UpdatePageInformation()">
                         <a class="nav-link" href="#">
                             正常
                             <span>{{ normal_Number }}</span>
                         </a>
                     </li>
-                    <li class="nav-item" id="notice" @click="selectedTab = 'notice'">
+                    <li class="nav-item" id="notice" @click="selectedTab = '注意'; UpdatePageInformation()">
                         <a class="nav-link" href="#">
                             注意
                             <span>{{ notice_Number }}</span>
                         </a>
                     </li>
-                    <li class="nav-item" id="abnormal" @click="selectedTab = 'abnormal'">
+                    <li class="nav-item" id="abnormal" @click="selectedTab = '異常'; UpdatePageInformation()">
                         <a class="nav-link" href="#">
                             異常
                             <span>{{ abnormal_Number }}</span>
                         </a>
                     </li>
-                    <li class="nav-item" id="danger" @click="selectedTab = 'danger'">
+                    <li class="nav-item" id="danger" @click="selectedTab = '危險'; UpdatePageInformation()">
                         <a class="nav-link" href="#">
                             危險
                             <span>{{ danger_Number }}</span>
@@ -92,7 +92,7 @@ import * as XLSX from 'xlsx'
 
             <div>
                 <!-- 正常 -->
-                <div class="tab_container" id="nor_con" v-if="selectedTab === 'normal'">
+                <div class="tab_container" id="nor_con" v-if="selectedTab === '正常'">
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
@@ -120,7 +120,7 @@ import * as XLSX from 'xlsx'
                     </div>
                 </div>
                 <!-- 注意 -->
-                <div class="tab_container" id="not_con" v-else-if="selectedTab === 'notice'">
+                <div class="tab_container" id="not_con" v-else-if="selectedTab === '注意'">
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
@@ -147,7 +147,7 @@ import * as XLSX from 'xlsx'
                     </div>
                 </div>
                 <!-- 異常 -->
-                <div class="tab_container" id="abn_con" v-else-if="selectedTab === 'abnormal'">
+                <div class="tab_container" id="abn_con" v-else-if="selectedTab === '異常'">
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
@@ -174,7 +174,7 @@ import * as XLSX from 'xlsx'
                     </div>
                 </div>
                 <!-- 危險 -->
-                <div class="tab_container" id="dan_con" v-else-if="selectedTab === 'danger'">
+                <div class="tab_container" id="dan_con" v-else-if="selectedTab === '危險'">
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
@@ -221,7 +221,7 @@ import * as XLSX from 'xlsx'
 export default {
     data() {
         return {
-            selectedTab: 'normal',
+            selectedTab: '正常',
             normal_Number: 0,
             notice_Number: 0,
             abnormal_Number: 0,
@@ -230,7 +230,7 @@ export default {
             showModal: false,
             options: ['風扇', '電線', '保險絲', '繼電器', '...'],
             details: [{}],
-            selectedOption: '', // 綁訂下拉選單與圓餅圖標題
+            selectedOption: '', // 下拉選單標題
             categories: [], // 新增用來存放 MongoDB 中的類別選項
             loading: 0,
             uploadTime: '',
@@ -257,6 +257,12 @@ export default {
 
         // 開始定時檢查 if_detect 狀態
         this.startCheckingIfDetect()
+
+        //更四種新狀態數字
+        this.updateStatusNumber()
+
+        //更新頁面資訊
+        this.UpdatePageInformation()
     },
     beforeUnmount() {
         //API
@@ -358,6 +364,8 @@ export default {
             clearInterval(this.ifDetectInterval)
             this.getCategories()
             this.GetTimeRecord()
+            this.updateStatusNumber()
+            this.UpdatePageInformation()
         },
         // 向後端發送請求來獲取 if_detect 狀態
         checkIfDetect() {
@@ -450,6 +458,7 @@ export default {
             this.axios.get('/tsmcserver/categories').then((res) => {
                 this.categories = res.data
             })
+            this.UpdatePageInformation()
         },
         // 監聽頁碼變化事件
         nor_handlePageChange(newPage) {
@@ -457,33 +466,38 @@ export default {
             this.nor_currentPage = newPage
 
             // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
-            this.fetchDataForPage(newPage)
+            this.UpdatePageInformation()
         },
         not_handlePageChange(newPage) {
             // 將當前頁碼更新為新的頁碼
             this.not_currentPage = newPage
 
             // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
-            this.fetchDataForPage(newPage)
+            this.UpdatePageInformation()
         },
         abn_handlePageChange(newPage) {
             // 將當前頁碼更新為新的頁碼
             this.abn_currentPage = newPage
 
             // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
-            this.fetchDataForPage(newPage)
+            this.UpdatePageInformation()
         },
         dan_handlePageChange(newPage) {
             // 將當前頁碼更新為新的頁碼
             this.dan_currentPage = newPage
 
             // 在這裡可以執行相應的操作，例如獲取新頁碼對應的數據
-            this.fetchDataForPage(newPage)
+            this.UpdatePageInformation()
         },
-        fetchDataForPage(page) {
+        UpdatePageInformation() {
             // 在這裡可以發起 API 請求，獲取新頁碼對應的數據
             // 這裡只是一個示例，實際應用中需要根據情況進行相應的處理
-            console.log(`Fetching data for page ${page}`)
+            console.log(this.selectedTab)
+            console.log(this.selectedOption)
+            console.log(this.nor_currentPage)
+            console.log(this.not_currentPage)
+            console.log(this.abn_currentPage)
+            console.log(this.dan_currentPage)
         }
     }
 }

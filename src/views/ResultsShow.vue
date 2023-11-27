@@ -478,7 +478,8 @@ export default {
                         return name + ':' + dataItem.value
                     }
                 },
-            });            
+            });     
+            console.log(this.details)       
         },
 
         // 獲取 MongoDB 中的類別選項
