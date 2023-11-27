@@ -498,6 +498,18 @@ export default {
             console.log(this.not_currentPage)
             console.log(this.abn_currentPage)
             console.log(this.dan_currentPage)
+            this.axios.post('/tsmcserver/page_information', {
+                result: this.selectedTab,
+                category: this.selectedOption,
+                nor_currentPage: this.nor_currentPage,
+                not_currentPage: this.not_currentPage,
+                abn_currentPage: this.abn_currentPage,
+                dan_currentPage: this.dan_currentPage
+            }).then(response => {
+                console.log(response.data); /*API回傳的資料*/
+            }).catch(error => {
+                console.log(error);
+            });
         }
     }
 }

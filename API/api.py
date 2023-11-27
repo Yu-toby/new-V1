@@ -255,5 +255,52 @@ def time_record():
             # 如果集合為空，返回一個特定值或錯誤訊息
             return jsonify({"status": "error", "message": "集合為空"})
 
+@app.route('/tsmcserver/page_information', methods=['POST'])
+def page_information():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取搜尋條件
+        category = request_data.get("category", "")
+        result = request_data.get("result", "")
+        if result == "正常":
+            page = request_data.get("nor_currentPage", 1)  # 如果未提供 'page' 參數，預設為第 1 頁
+        elif result == "注意":
+            page = request_data.get("not_currentPage", 1)
+        elif result == "異常":
+            page = request_data.get("abn_currentPage", 1)
+        else:
+            page = request_data.get("dan_currentPage", 1)
+        
+        print(category, result, page)
+
+        # 計算要跳過的文件數
+        skip_count = (page - 1) * 18
+
+        # 建立搜尋條件
+        search_criteria = {"category": category, "result": result}
+
+        data1 = list(collection.find(projection={"_id": False}))
+        # print(data1)
+
+        # 查詢並回傳結果
+        data = list(
+            collection.find(search_criteria, projection={"_id": False})
+            .sort([("name", 1)])  # 依照 name 欄位升冪排序
+            .skip(skip_count)
+            .limit(18)  # 限制回傳筆數
+        )
+        
+        print("Filtered data:")
+        for item in data:
+            print(item)
+
+        return jsonify(data), 200
+
+def create_indexes():
+    # 為 'tsmccollection' 集合建立名字和狀態的索引
+    collection.create_index([("name", 1), ("status", 1)])
+
 if __name__ == '__main__':
+    create_indexes()  # 在應用程式啟動之前建立索引
     app.run(debug=True, port=8000)
