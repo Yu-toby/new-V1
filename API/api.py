@@ -343,7 +343,7 @@ def page_information():
             data_item["image"] = f"data:image/jpeg;base64,{image_base64}"
             data_item["original_image"] = image_path
 
-        response_data = {"data": data, "category_count": dict(category_count)}
+        response_data = {"data": data, "category_count": category_count}
         return jsonify(response_data), 200
 
 def create_indexes():

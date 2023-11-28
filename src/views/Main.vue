@@ -230,7 +230,7 @@ export default {
             notice_Number: 0,
             abnormal_Number: 0,
             danger_Number: 0,
-            category_number: 0,
+            category_total_number: 0,
             showIndex: 0,
             showModal: false,
             options: ['風扇', '電線', '保險絲', '繼電器', '...'],
@@ -239,10 +239,10 @@ export default {
             categories: [], // 新增用來存放 MongoDB 中的類別選項
             loading: 0,
             uploadTime: '',
-            nor_totalPages: 50,
-            not_totalPages: 50,
-            abn_totalPages: 50,
-            dan_totalPages: 50,
+            nor_totalPages: 10,
+            not_totalPages: 10,
+            abn_totalPages: 10,
+            dan_totalPages: 10,
             nor_currentPage: 1,
             not_currentPage: 1,
             abn_currentPage: 1,
@@ -433,36 +433,10 @@ export default {
         },
         //更新狀態數字
         updateStatusNumber() {
-            // this.normal_Number = this.details.filter(
-            //     (item) =>
-            //         item.result === '正常' &&
-            //         item.category === this.selectedOption &&
-            //         item.time === this.uploadTime
-            // ).length            
-            // this.notice_Number = this.details.filter(
-            //     (item) =>
-            //         item.result === '注意' &&
-            //         item.category === this.selectedOption &&
-            //         item.time === this.uploadTime
-            // ).length
-            // this.abnormal_Number = this.details.filter(
-            //     (item) =>
-            //         item.result === '異常' &&
-            //         item.category === this.selectedOption &&
-            //         item.time === this.uploadTime
-            // ).length
-            // this.danger_Number = this.details.filter(
-            //     (item) =>
-            //         item.result === '危險' &&
-            //         item.category === this.selectedOption &&
-            //         item.time === this.uploadTime
-            // ).length
-
-            // this.normal_Number = this.category_number['正常']
-
-            // this.normal_Number = this.category_number[0]
-            // console.log(this.category_number[this.selectedOption]['正常'])
-
+            // this.normal_Number = this.category_number[this.selectedOption]["正常"];
+            // this.notice_Number = this.category_number[this.selectedOption]["注意"];
+            // this.abnormal_Number = this.category_number[this.selectedOption]["異常"];
+            // this.danger_Number = this.category_number[this.selectedOption]["危險"];
         },
         // 獲取 MongoDB 中的類別選項
         getCategories() {
@@ -517,14 +491,20 @@ export default {
                 abn_currentPage: this.abn_currentPage,
                 dan_currentPage: this.dan_currentPage
             }).then(response => {
-                const { data, category_count } = response.data;
-                // 在這裡使用解析後的數據
-                console.log(data);
-                console.log(category_count);
+                const { data, category_count } = response.data;     //解構數值
 
                 this.details = data;
-                this.category_number = category_count;
-                // console.log(response.data); /*API回傳的資料*/
+                this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
+
+                this.normal_Number = category_count[this.selectedOption]["正常"];
+                this.notice_Number = category_count[this.selectedOption]["注意"];
+                this.abnormal_Number = category_count[this.selectedOption]["異常"];
+                this.danger_Number = category_count[this.selectedOption]["危險"];
+
+                this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);
+                this.not_totalPages = 10*Math.ceil(category_count[this.selectedOption]["注意"] / 18);
+                this.abn_totalPages = 10*Math.ceil(category_count[this.selectedOption]["異常"] / 18);
+                this.dan_totalPages = 10*Math.ceil(category_count[this.selectedOption]["危險"] / 18);
             }).catch(error => {
                 console.log(error);
             });
@@ -546,7 +526,7 @@ export default {
 
 .optionsbar {
     display: grid;
-    grid-template-columns: 1fr 2.8fr 1.8fr 1fr 0.8fr 1.2fr;
+    grid-template-columns: 1fr 3.2fr 1.4fr 1fr 0.8fr 1.2fr;
     /* border: 2px solid black; */
 }
 
