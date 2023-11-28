@@ -8,7 +8,7 @@
             <!-- <router-link to="/logout" ></router-link> -->
             <router-link to="/settings" >設定</router-link>
             <router-link to="/history">歷史查詢</router-link>            
-            <router-link to="/resultsShow" >辨識結果</router-link>
+            <!-- <router-link to="/resultsShow" >辨識結果</router-link> -->
             <router-link to="/" >首頁</router-link>
         </div>
     </header>
