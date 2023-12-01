@@ -275,16 +275,6 @@ def page_information():
         
         # print(category, result, page)
 
-        data1 = list(collection.find(projection={"original_id": False}))
-        
-        # 統計特定 category 對應四種 result 的數量
-        category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
-        for item1 in data1:
-            if item1["category"] == category:
-                category_count[category][item1["result"]] += 1
-
-        print("category_count:", category_count)
-
         # 計算要跳過的文件數
         skip_count = (page - 1) * 18
 
@@ -293,7 +283,7 @@ def page_information():
 
         # 查詢並回傳結果
         data = list(
-            collection.find(search_criteria, projection={"_id": False})
+            collection.find(search_criteria, projection={"_id": False, "original_id": False})
             .sort([("name", 1)])  # 依照 name 欄位升冪排序
             .skip(skip_count)
             .limit(18)  # 限制回傳筆數
@@ -342,6 +332,17 @@ def page_information():
             data_item["result"] = data_item.get("result", "")
             data_item["image"] = f"data:image/jpeg;base64,{image_base64}"
             data_item["original_image"] = image_path
+
+        
+        data1 = list(collection.find(projection={"original_id": False}))
+        
+        # 統計特定 category 對應四種 result 的數量
+        category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
+        for item1 in data1:
+            if item1["category"] == category:
+                category_count[category][item1["result"]] += 1
+
+        print("category_count:", category_count)
 
         response_data = {"data": data, "category_count": category_count}
         return jsonify(response_data), 200
