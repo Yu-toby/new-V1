@@ -435,11 +435,10 @@ export default {
         updateStatusNumber() {
             this.axios.post('/tsmcserver/status_number',{category: this.selectedOption})
             .then((res) => {
-                this.normal_Number = res.data["正常"];
-                this.notice_Number = res.data["注意"];
-                this.abnormal_Number = res.data["異常"];
-                this.danger_Number = res.data["危險"];
-                console.log(res.data)
+                this.normal_Number = res.data[this.selectedOption]["正常"];
+                this.notice_Number = res.data[this.selectedOption]["注意"];
+                this.abnormal_Number = res.data[this.selectedOption]["異常"];
+                this.danger_Number = res.data[this.selectedOption]["危險"];
             })
         },
         // 獲取 MongoDB 中的類別選項
@@ -489,15 +488,17 @@ export default {
                 abn_currentPage: this.abn_currentPage,
                 dan_currentPage: this.dan_currentPage
             }).then(response => {
+                console.log(response.data);
                 const { data, category_count } = response.data;     //解構數值
+                
 
                 this.details = data;
                 // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
 
-                this.normal_Number = category_count[this.selectedOption]["正常"];
-                this.notice_Number = category_count[this.selectedOption]["注意"];
-                this.abnormal_Number = category_count[this.selectedOption]["異常"];
-                this.danger_Number = category_count[this.selectedOption]["危險"];
+                // this.normal_Number = category_count[this.selectedOption]["正常"];
+                // this.notice_Number = category_count[this.selectedOption]["注意"];
+                // this.abnormal_Number = category_count[this.selectedOption]["異常"];
+                // this.danger_Number = category_count[this.selectedOption]["危險"];
 
                 this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);
                 this.not_totalPages = 10*Math.ceil(category_count[this.selectedOption]["注意"] / 18);
