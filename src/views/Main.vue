@@ -34,7 +34,7 @@ import * as XLSX from 'xlsx'
                 <div id="status"></div>
             </div>
             <div class="dropdown item" id="drop-down-menu">
-                <select v-model="selectedOption" @change="getCategories(); updateStatusNumber(); UpdatePageInformation()">
+                <select v-model="selectedOption" @change="getCategories(); updateStatusNumber()">
                     <option value disabled selected>請選擇類別</option>
                     <option
                         v-for="(category, index) in categories"
@@ -267,7 +267,7 @@ export default {
         this.updateStatusNumber()
 
         //更新頁面資訊
-        this.UpdatePageInformation()
+        // this.UpdatePageInformation()
     },
     beforeUnmount() {
         //API
@@ -433,17 +433,22 @@ export default {
         },
         //更新狀態數字
         updateStatusNumber() {
-            // this.normal_Number = this.category_number[this.selectedOption]["正常"];
-            // this.notice_Number = this.category_number[this.selectedOption]["注意"];
-            // this.abnormal_Number = this.category_number[this.selectedOption]["異常"];
-            // this.danger_Number = this.category_number[this.selectedOption]["危險"];
+            this.axios.post('/tsmcserver/status_number',{category: this.selectedOption})
+            .then((res) => {
+                this.normal_Number = res.data["正常"];
+                this.notice_Number = res.data["注意"];
+                this.abnormal_Number = res.data["異常"];
+                this.danger_Number = res.data["危險"];
+                console.log(res.data)
+            })
         },
         // 獲取 MongoDB 中的類別選項
         getCategories() {
             this.axios.get('/tsmcserver/categories').then((res) => {
                 this.categories = res.data
+                this.UpdatePageInformation()
             })
-            this.UpdatePageInformation()
+            
         },
         // 監聽頁碼變化事件
         nor_handlePageChange(newPage) {
@@ -476,13 +481,6 @@ export default {
         },
         UpdatePageInformation() {
             // 在這裡可以發起 API 請求，獲取新頁碼對應的數據
-            // 這裡只是一個示例，實際應用中需要根據情況進行相應的處理
-            // console.log(this.selectedTab)
-            // console.log(this.selectedOption)
-            // console.log(this.nor_currentPage)
-            // console.log(this.not_currentPage)
-            // console.log(this.abn_currentPage)
-            // console.log(this.dan_currentPage)
             this.axios.post('/tsmcserver/page_information', {
                 result: this.selectedTab,
                 category: this.selectedOption,
@@ -494,7 +492,7 @@ export default {
                 const { data, category_count } = response.data;     //解構數值
 
                 this.details = data;
-                this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
+                // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
 
                 this.normal_Number = category_count[this.selectedOption]["正常"];
                 this.notice_Number = category_count[this.selectedOption]["注意"];
@@ -508,7 +506,7 @@ export default {
             }).catch(error => {
                 console.log(error);
             });
-            this.updateStatusNumber()
+            // this.updateStatusNumber()
         }
     }
 }

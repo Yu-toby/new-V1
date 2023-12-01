@@ -102,30 +102,6 @@ def todo():
         return jsonify(tsmcservers)
 
     elif request.method == 'POST':
-        # data = request.form.to_dict()
-        # # 處理圖片上傳
-        # images = request.files.getlist('image')
-
-        # # 處理並保存每個圖片
-        # if images:
-        #     # 創建以當前日期和順序命名的資料夾名稱
-        #     current_date = datetime.date.today().strftime('%Y%m%d')
-        #     new_filename = f'{current_date}-{str(file_count).zfill(3)}'
-        #     if os.makedirs(new_filename, exist_ok=True):
-        #         file_count += 1
-        #     else:
-        #         current_folder = "/".join([app.config['UPLOAD_FOLDER'], new_filename])
-        #         image_filenames = []
-        #         for image in images:
-        #             os.makedirs(current_folder, exist_ok=True)
-        #             file_path = "/".join([current_folder, image.filename])
-        #             image.save(file_path)
-        #             image_filenames.append(file_path)
-                
-
-        #         data['images'] = image_filenames
-        #         file_count += 1
-
         data = request.form.to_dict()
         # 處理圖片上傳
         images = request.files.getlist('image')
@@ -264,6 +240,7 @@ def page_information():
         # 提取搜尋條件
         category = request_data.get("category", "")
         result = request_data.get("result", "")
+        time_record = collection_TimeRecord.find_one().get("time_record", "")
         if result == "正常":
             page = request_data.get("nor_currentPage", 1)  # 如果未提供 'page' 參數，預設為第 1 頁
         elif result == "注意":
@@ -279,7 +256,11 @@ def page_information():
         skip_count = (page - 1) * 18
 
         # 建立搜尋條件
-        search_criteria = {"category": category, "result": result}
+        search_criteria = {"category": category, "result": result, "time": time_record}
+        # print(search_criteria)
+
+        data2 = list(collection.find(projection={"original_id": False}))
+        # print("data2:" , data2)
 
         # 查詢並回傳結果
         data = list(
@@ -288,7 +269,7 @@ def page_information():
             .skip(skip_count)
             .limit(18)  # 限制回傳筆數
         )        
-        # print("Filtered data:")
+        # print("data:")
         # for item in data:
         #     print(item)
 
@@ -333,8 +314,9 @@ def page_information():
             data_item["image"] = f"data:image/jpeg;base64,{image_base64}"
             data_item["original_image"] = image_path
 
-        
-        data1 = list(collection.find(projection={"original_id": False}))
+        search_time_record = {"time": time_record}
+        data1 = list(collection.find(search_time_record, projection={"original_id": False}))
+        # print("data1:", data1)
         
         # 統計特定 category 對應四種 result 的數量
         category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
@@ -342,14 +324,38 @@ def page_information():
             if item1["category"] == category:
                 category_count[category][item1["result"]] += 1
 
-        print("category_count:", category_count)
+        # print("category_count:", category_count)
 
         response_data = {"data": data, "category_count": category_count}
         return jsonify(response_data), 200
+    
+@app.route('/tsmcserver/status_number', methods=['POST'])
+def number_information():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取搜尋條件
+        category = request_data.get("category", "")
+        time_record = collection_TimeRecord.find_one().get("time_record", "")
+
+        search_number = {"category": category, "time": time_record}
+        data1 = list(
+            collection.find(search_number, projection={"original_id": False}))
+        # print("data1:", data1)
+        
+        # 統計特定 category 對應四種 result 的數量
+        category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
+        for item1 in data1:
+            if item1["category"] == category:
+                category_count[category][item1["result"]] += 1
+
+        print("category_count1:", category_count)
+        
+        return jsonify(category_count), 200
 
 def create_indexes():
     # 為 'tsmccollection' 集合建立名字和狀態的索引
-    collection.create_index([("name", 1), ("status", 1)])
+    collection.create_index([("name", 1), ("status", 1), ("time", 1)])
 
 if __name__ == '__main__':
     create_indexes()  # 在應用程式啟動之前建立索引
