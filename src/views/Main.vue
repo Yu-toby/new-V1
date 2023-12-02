@@ -58,6 +58,25 @@ import * as XLSX from 'xlsx'
             <div class="item" id="export">
                 <button type="button" class="btn btn-secondary" @click="exportExcel">匯出報告</button>
             </div>
+            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div
+                ref="liveToast"
+                class="toast align-items-center text-light bg-dark border-0"
+                role="alert"
+                aria-live="assertive"
+                aria-atomic="true"
+            >
+                <div class="d-flex">
+                    <div class="toast-body">辨識完成</div>
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast"
+                        aria-label="Close"
+                    ></button>
+                </div>
+            </div>
+        </div>
         </div>
 
         <div class="content">
@@ -376,6 +395,7 @@ export default {
             this.GetTimeRecord()
             this.updateStatusNumber()
             this.UpdatePageInformation()
+            this.showToast()
         },
         // 向後端發送請求來獲取 if_detect 狀態
         checkIfDetect() {
@@ -513,6 +533,10 @@ export default {
                 console.log(error);
             });
             // this.updateStatusNumber()
+        },
+        showToast() {
+            // 這裡初始化並顯示 Bootstrap Toast
+            new bootstrap.Toast(this.$refs.liveToast).show()
         }
     }
 }
