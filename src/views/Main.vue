@@ -320,6 +320,11 @@ export default {
                         alert('上傳成功')
                         // 清空選中的文件
                         fileInput.value = ''
+                        // 清空tab數字
+                        this.normal_Number = 0
+                        this.notice_Number = 0
+                        this.abnormal_Number = 0
+                        this.danger_Number = 0
                         // 或取時間紀錄
                         this.GetTimeRecord()
                         // 重新獲取數據或執行其他操作

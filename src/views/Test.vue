@@ -1,9 +1,7 @@
 <template>
     <div>
         <button @click="showNotification">顯示通知</button>
-        <div v-if="notificationVisible" class="notification">
-            {{ notificationMessage }}
-        </div>
+        <div v-if="notificationVisible" class="notification">{{ notificationMessage }}</div>
     </div>
 </template>
 
@@ -12,21 +10,21 @@ export default {
     data() {
         return {
             notificationVisible: false,
-            notificationMessage: '',
-        };
+            notificationMessage: ''
+        }
     },
     methods: {
         showNotification() {
-            this.notificationMessage = '這是一條通知消息';
-            this.notificationVisible = true;
+            this.notificationMessage = '這是一條通知消息'
+            this.notificationVisible = true
 
             // 設定一定時間後自動隱藏通知
             setTimeout(() => {
-                this.notificationVisible = false;
-            }, 3000); // 這裡的3000表示通知顯示3秒後自動隱藏
-        },
-    },
-};
+                this.notificationVisible = false
+            }, 3000) // 這裡的3000表示通知顯示3秒後自動隱藏
+        }
+    }
+}
 </script>
 
 <style scoped>
@@ -35,7 +33,7 @@ export default {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #4CAF50;
+    background-color: #4caf50;
     color: white;
     padding: 15px;
     border-radius: 5px;

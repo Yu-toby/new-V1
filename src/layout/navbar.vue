@@ -6,6 +6,7 @@
         </div>
         <div class="options">
             <!-- <router-link to="/logout" ></router-link> -->
+            <router-link to="/test" >測試頁面</router-link>
             <router-link to="/settings" >設定</router-link>
             <router-link to="/history">歷史查詢</router-link>            
             <!-- <router-link to="/resultsShow" >辨識結果</router-link> -->

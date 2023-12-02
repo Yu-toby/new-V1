@@ -6,6 +6,7 @@ import Main from '@/views/Main.vue'
 import ResultsShow from '@/views/ResultsShow.vue'
 import Setting from '@/views/Setting.vue'
 import History from '@/views/History.vue'
+import Test from '@/views/Test.vue'
 import Layout from '@/layout/layout.vue'
 
 const router = createRouter({
@@ -44,6 +45,11 @@ const router = createRouter({
                     path: '/history',
                     name: 'History',
                     component: History
+                },
+                {
+                    path: '/test',
+                    name: 'Test',
+                    component: Test
                 }
             ]
         }
