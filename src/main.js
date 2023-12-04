@@ -13,16 +13,11 @@ axios.defaults.baseURL = "/api";
 import elementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 
-import {
-    // create naive ui
-    create,
-    // component
-    NButton
-} from 'naive-ui'
+import naive from 'naive-ui'
 
-const naive = create({
-    components: [NButton]
-})
+// const naive = create({
+//     components: [NButton]
+// })
 
 const app = createApp(App)
 app.use(router)

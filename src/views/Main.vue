@@ -395,7 +395,7 @@ export default {
             this.GetTimeRecord()
             this.updateStatusNumber()
             this.UpdatePageInformation()
-            this.showToast()
+            // this.showToast()
         },
         // 向後端發送請求來獲取 if_detect 狀態
         checkIfDetect() {
