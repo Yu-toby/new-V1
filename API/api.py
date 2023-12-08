@@ -256,8 +256,11 @@ def page_information():
         skip_count = (page - 1) * 18
 
         # 建立搜尋條件
-        search_criteria = {"category": category, "result": result, "time": time_record}
-        # print(search_criteria)
+        if category == "全部":
+            search_criteria = {"result": result, "time": time_record}
+        else:
+            search_criteria = {"category": category, "result": result, "time": time_record}
+        # print('全部:', search_criteria)
 
         data2 = list(collection.find(projection={"original_id": False}))
         # print("data2:" , data2)
@@ -339,7 +342,12 @@ def number_information():
         category = request_data.get("category", "")
         time_record = collection_TimeRecord.find_one().get("time_record", "")
 
-        search_number = {"category": category, "time": time_record}
+        # 建立搜尋條件
+        if category == "全部":
+            search_number = {"time": time_record}
+        else:
+            search_number = {"category": category, "time": time_record}
+        # print('search_number:', search_number)
         data1 = list(
             collection.find(search_number, projection={"original_id": False}))
         # print("data1:", data1)
@@ -347,6 +355,8 @@ def number_information():
         # 統計特定 category 對應四種 result 的數量
         category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
         for item1 in data1:
+            if category == "全部":
+                category_count["全部"][item1["result"]] += 1
             if item1["category"] == category:
                 category_count[category][item1["result"]] += 1
 

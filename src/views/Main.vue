@@ -42,18 +42,6 @@ import * as XLSX from 'xlsx'
                         :value="category"
                     >{{ category }}</option>
                 </select>
-                <!-- <button
-                    class="btn btn-secondary dropdown-toggle"
-                    type="button"
-                    id="dropdownMenuButton2"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false"
-                >下拉選單</button>
-                <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton1" >
-                    <li v-for="(option, index) in options" :key="index">
-                        <a class="dropdown-item" href="#">{{ option }}</a>
-                    </li>
-                </ul>-->
             </div>
             <div class="item" id="export">
                 <button type="button" class="btn btn-secondary" @click="exportExcel">匯出報告</button>
@@ -120,7 +108,7 @@ import * as XLSX from 'xlsx'
                             @click="show(index)"
                         >
                             <SmallPicture
-                                v-if="details.result === '正常' && details.category === selectedOption && details.time === uploadTime"
+                                v-if="details.result === '正常' && details.time === uploadTime"
                                 :src="details.infrared"
                                 loading="lazy"
                             ></SmallPicture>
@@ -149,7 +137,7 @@ import * as XLSX from 'xlsx'
                             @click="show(index)"
                         >
                             <SmallPicture
-                                v-if="details.result === '注意' && details.category === selectedOption && details.time === uploadTime"
+                                v-if="details.result === '注意' && details.time === uploadTime"
                                 :src="details.infrared"
                             ></SmallPicture>
                         </div>
@@ -177,7 +165,7 @@ import * as XLSX from 'xlsx'
                             @click="show(index)"
                         >
                             <SmallPicture
-                                v-if="details.result === '異常' && details.category === selectedOption && details.time === uploadTime"
+                                v-if="details.result === '異常' && details.time === uploadTime"
                                 :src="details.infrared"
                             ></SmallPicture>
                         </div>
@@ -205,7 +193,7 @@ import * as XLSX from 'xlsx'
                             @click="show(index)"
                         >
                             <SmallPicture
-                                v-if="details.result === '危險' && details.category === selectedOption && details.time === uploadTime"
+                                v-if="details.result === '危險' && details.time === uploadTime"
                                 :src="details.infrared"
                             ></SmallPicture>
                         </div>
@@ -253,7 +241,6 @@ export default {
             category_total_number: 0,
             showIndex: 0,
             showModal: false,
-            options: ['風扇', '電線', '保險絲', '繼電器', '...'],
             details: [{}],
             selectedOption: '', // 下拉選單標題
             categories: [], // 新增用來存放 MongoDB 中的類別選項
@@ -461,7 +448,7 @@ export default {
         },
         //更新狀態數字
         updateStatusNumber() {
-            this.axios.post('/tsmcserver/status_number',{category: this.selectedOption})
+            this.axios.post('/tsmcserver/status_number',{category: this.selectedOption === '全部' ? '全部' : this.selectedOption})
             .then((res) => {
                 this.normal_Number = res.data[this.selectedOption]["正常"];
                 this.notice_Number = res.data[this.selectedOption]["注意"];
@@ -472,7 +459,9 @@ export default {
         // 獲取 MongoDB 中的類別選項
         getCategories() {
             this.axios.get('/tsmcserver/categories').then((res) => {
-                this.categories = res.data
+                const all_categories = res.data
+                all_categories.unshift('全部')
+                this.categories = all_categories
                 this.UpdatePageInformation()
             })
             
@@ -510,7 +499,7 @@ export default {
             // 在這裡可以發起 API 請求，獲取新頁碼對應的數據
             this.axios.post('/tsmcserver/page_information', {
                 result: this.selectedTab,
-                category: this.selectedOption,
+                category: this.selectedOption === '全部' ? '全部' : this.selectedOption,
                 nor_currentPage: this.nor_currentPage,
                 not_currentPage: this.not_currentPage,
                 abn_currentPage: this.abn_currentPage,
@@ -523,11 +512,6 @@ export default {
                 this.details = data;
                 // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
 
-                // this.normal_Number = category_count[this.selectedOption]["正常"];
-                // this.notice_Number = category_count[this.selectedOption]["注意"];
-                // this.abnormal_Number = category_count[this.selectedOption]["異常"];
-                // this.danger_Number = category_count[this.selectedOption]["危險"];
-
                 this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);
                 this.not_totalPages = 10*Math.ceil(category_count[this.selectedOption]["注意"] / 18);
                 this.abn_totalPages = 10*Math.ceil(category_count[this.selectedOption]["異常"] / 18);
@@ -535,7 +519,6 @@ export default {
             }).catch(error => {
                 console.log(error);
             });
-            // this.updateStatusNumber()
         },
         showToast() {
             // 這裡初始化並顯示 Bootstrap Toast
