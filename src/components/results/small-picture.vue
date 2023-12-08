@@ -1,7 +1,11 @@
 <template>
-    <div class="small-picture">
-        <img class="picture" :src="src" alt="資訊錯誤" loading="lazy" />
+    <div>
+        <div class="small-picture">
+            <img class="picture" :src="src" alt="資訊錯誤" loading="lazy" />
+        </div>
+            <p class="image_name">{{ img_name }}</p>
     </div>
+    
 </template>
 <script>
 export default {
@@ -20,14 +24,29 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+    align-content: center;
+    flex-direction: column;
     width: 100%;
-    height: calc((100vh - 90px - 80px - 43px - 45px)/3);    /* 90px: navbar, 80px: optionsbar, 43px: tab, 37px: page */
+    height: calc((100vh - 90px - 80px - 43px - 103px)/3);    /* 90px: navbar, 80px: optionsbar, 43px: tab, 37px: page */
 }
 
 .small-picture img {
     max-width: 100%;
     max-height: 100%;
     object-fit: cover;
+}
+
+.image_name {
+    /* flex: 1; */
+    color: #000000;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    width: 100%;
+    height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .small-picture img:hover {
