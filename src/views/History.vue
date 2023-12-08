@@ -30,7 +30,7 @@
         <div class="content">
             <div class="historical_data">
                 <ul>
-                    <li v-for="(item, index) in historicalData" :key="index">{{ item }}</li>
+                    <div v-for="(item, index) in historicalData" :key="index">{{ item }}</div>
                 </ul>
             </div>
 
