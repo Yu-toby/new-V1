@@ -18,7 +18,11 @@
                         <th id="min-temperature">{{describe?.min}}℃</th>
                     </tr>
                 </table>
+                <div class="change_image_btn">
+                    <button type="button" class="btn btn-secondary" @click="changeImage">熱影像 / 可見光</button>
+                </div>
                 <img :src="src" id="detail-picture"  :style="{ borderColor: tbcolor }">
+                
             </div>
             <div id="result-field">
                 <p id="result-text">檢測結果：{{describe?.result}}</p>
@@ -52,6 +56,9 @@ export default {
     methods: {
         closeModal() {
             this.$emit("close");
+        },
+        changeImage() {
+            this.$emit("change");
         }
     },
 }
@@ -139,7 +146,7 @@ export default {
 #detail-picture {
     height: 33vh;
     width: auto;
-    margin-top: 5%;
+    margin-top: 10px;
     border: 3px solid;
     /* border-color: rgb(124, 208, 72); */
 }
@@ -158,5 +165,11 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.change_image_btn {
+    margin-top: 5px;
+    /* display: flex; */
+    /* justify-content: center; */
 }
 </style>

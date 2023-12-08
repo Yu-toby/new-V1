@@ -115,13 +115,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.image"
+                            :src="details.infrared"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '正常' && details.category === selectedOption && details.time === uploadTime"
-                                :src="details.image"
+                                :src="details.infrared"
                                 loading="lazy"
                             ></SmallPicture>
                         </div>
@@ -144,13 +144,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.image"
+                            :src="details.infrared"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '注意' && details.category === selectedOption && details.time === uploadTime"
-                                :src="details.image"
+                                :src="details.infrared"
                             ></SmallPicture>
                         </div>
                     </div>
@@ -172,13 +172,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.image"
+                            :src="details.infrared"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '異常' && details.category === selectedOption && details.time === uploadTime"
-                                :src="details.image"
+                                :src="details.infrared"
                             ></SmallPicture>
                         </div>
                     </div>
@@ -200,13 +200,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.image"
+                            :src="details.infrared"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '危險' && details.category === selectedOption && details.time === uploadTime"
-                                :src="details.image"
+                                :src="details.infrared"
                             ></SmallPicture>
                         </div>
                     </div>
@@ -226,12 +226,13 @@ import * as XLSX from 'xlsx'
                 <!-- 祥細資料 -->
                 <div v-if="details && details.length > 0">
                     <Detail
-                        :src="details[showIndex].image"
+                        :src="currentImage"
                         :bcolor="details[showIndex].result === '正常' ? 'rgb(226, 245, 215)' : details[showIndex].result === '注意' ? 'rgb(255, 243, 205)' : details[showIndex].result === '異常' ? 'rgb(248, 215, 178)' : 'rgb(245, 215, 215)'"
                         :tbcolor="details[showIndex].result === '正常' ? 'rgb(124, 208, 72)' : details[showIndex].result === '注意' ? 'rgb(255, 200, 25)' : details[showIndex].result === '異常' ? 'rgb(191, 108, 17)' : 'rgb(181, 59, 59)'"
                         :describe="details[showIndex]"
                         v-show="showModal"
                         @close="showModal = false"
+                        @change="changeImage"
                     ></Detail>
                 </div>
                 <div v-else></div>
@@ -266,6 +267,8 @@ export default {
             not_currentPage: 1,
             abn_currentPage: 1,
             dan_currentPage: 1,
+            images: [],
+            currentImageIndex: 0,
         }
     },
     mounted() {
@@ -537,6 +540,19 @@ export default {
         showToast() {
             // 這裡初始化並顯示 Bootstrap Toast
             new bootstrap.Toast(this.$refs.liveToast).show()
+        },
+        changeImage() {
+            // 在兩張圖片之間切換
+            this.currentImageIndex = 1 - this.currentImageIndex;
+        }
+    },
+    computed: {
+        currentImage() {
+            this.images = [
+                this.details[this.showIndex].infrared,
+                this.details[this.showIndex].visible_light
+            ]
+            return this.images[this.currentImageIndex];
         }
     }
 }

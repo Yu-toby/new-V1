@@ -285,7 +285,7 @@ def page_information():
             y2 = int(data_item.get("coordinate", {}).get("ymax", 0))
 
             # 獲取圖片路徑
-            image_path = data_item.get("image", "")
+            image_path = data_item.get("image", {}).get("infrared", "")
 
             # 開啟圖片
             original_image = Image.open(os.getcwd() + "/" + image_path)
@@ -311,7 +311,8 @@ def page_information():
             data_item["avg"] = round(float(data_item.get("temp", {}).get("avg", 0)), 1)
             data_item["min"] = round(float(data_item.get("temp", {}).get("min", 0)), 1)
             data_item["result"] = data_item.get("result", "")
-            data_item["image"] = f"data:image/jpeg;base64,{image_base64}"
+            data_item["infrared"] = f"data:image/jpeg;base64,{image_base64}"
+            data_item["visible_light"] = data_item.get("image", {}).get("visible_light", "")
             data_item["original_image"] = image_path
 
         search_time_record = {"time": time_record}
