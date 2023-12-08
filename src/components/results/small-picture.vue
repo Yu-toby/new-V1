@@ -3,7 +3,7 @@
         <div class="small-picture">
             <img class="picture" :src="src" alt="資訊錯誤" loading="lazy" />
         </div>
-            <p class="image_name">{{ img_name }}</p>
+            <p class="image_name">{{ getImageName() }}</p>
     </div>
     
 </template>
@@ -13,6 +13,17 @@ export default {
         src: {
             type: String,
             default: ''
+        },
+        original_image: {
+            type: String,
+            default: ''
+        }
+    },
+    methods: {
+        getImageName() {
+            // 從 src 中獲取文件名稱
+            const fileName = this.original_image.split('\\').pop();
+            return fileName;
         }
     }
 }
@@ -27,7 +38,7 @@ export default {
     align-content: center;
     flex-direction: column;
     width: 100%;
-    height: calc((100vh - 90px - 80px - 43px - 103px)/3);    /* 90px: navbar, 80px: optionsbar, 43px: tab, 37px: page */
+    height: calc((100vh - 90px - 80px - 43px - 110px)/3);    /* 90px: navbar, 80px: optionsbar, 43px: tab, 37px: page */
 }
 
 .small-picture img {
@@ -43,7 +54,7 @@ export default {
     padding: 0;
     text-align: center;
     width: 100%;
-    height: 20px;
+    height: 23px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

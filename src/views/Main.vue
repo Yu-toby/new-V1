@@ -110,6 +110,7 @@ import * as XLSX from 'xlsx'
                             <SmallPicture
                                 v-if="details.result === '正常' && details.time === uploadTime"
                                 :src="details.infrared"
+                                :original_image="details.original_image"
                                 loading="lazy"
                             ></SmallPicture>
                         </div>
@@ -139,6 +140,7 @@ import * as XLSX from 'xlsx'
                             <SmallPicture
                                 v-if="details.result === '注意' && details.time === uploadTime"
                                 :src="details.infrared"
+                                :original_image="details.original_image"
                             ></SmallPicture>
                         </div>
                     </div>
@@ -167,6 +169,7 @@ import * as XLSX from 'xlsx'
                             <SmallPicture
                                 v-if="details.result === '異常' && details.time === uploadTime"
                                 :src="details.infrared"
+                                :original_image="details.original_image"
                             ></SmallPicture>
                         </div>
                     </div>
@@ -195,6 +198,7 @@ import * as XLSX from 'xlsx'
                             <SmallPicture
                                 v-if="details.result === '危險' && details.time === uploadTime"
                                 :src="details.infrared"
+                                :original_image="details.original_image"
                             ></SmallPicture>
                         </div>
                     </div>
