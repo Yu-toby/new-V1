@@ -38,7 +38,7 @@ export default {
     align-content: center;
     flex-direction: column;
     width: 100%;
-    height: calc((100vh - 90px - 80px - 43px - 110px)/3);    /* 90px: navbar, 80px: optionsbar, 43px: tab, 37px: page */
+    height: calc((100vh - 90px - 80px - 43px - 101px)/3);    /* 90px: navbar, 80px: optionsbar, 43px: tab, 37px: page */
 }
 
 .small-picture img {
@@ -48,13 +48,13 @@ export default {
 }
 
 .image_name {
-    /* flex: 1; */
+    font-size: 13.5px;
     color: #000000;
     margin: 0;
     padding: 0;
     text-align: center;
     width: 100%;
-    height: 23px;
+    height: 20px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
