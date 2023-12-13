@@ -22,7 +22,6 @@
                     <button type="button" class="btn btn-secondary" @click="changeImage">熱影像 / 可見光</button>
                 </div>
                 <img :src="src" id="detail-picture"  :style="{ borderColor: tbcolor }">
-                
             </div>
             <div id="result-field">
                 <p id="result-text">檢測結果：{{describe?.result}}</p>

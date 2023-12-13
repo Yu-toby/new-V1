@@ -331,6 +331,7 @@ def page_information():
         # print("category_count:", category_count)
 
         response_data = {"data": data, "category_count": category_count}
+        print("response_data:", response_data)
         return jsonify(response_data), 200
     
 @app.route('/tsmcserver/status_number', methods=['POST'])

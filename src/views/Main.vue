@@ -243,13 +243,18 @@ export default {
             abnormal_Number: 0,
             danger_Number: 0,
             category_total_number: 0,
+
             showIndex: 0,
             showModal: false,
+
             details: [{}],
+
             selectedOption: '', // 下拉選單標題
             categories: [], // 新增用來存放 MongoDB 中的類別選項
+
             loading: 0,
             uploadTime: '',
+
             nor_totalPages: 10,
             not_totalPages: 10,
             abn_totalPages: 10,
@@ -258,6 +263,7 @@ export default {
             not_currentPage: 1,
             abn_currentPage: 1,
             dan_currentPage: 1,
+
             images: [],
             currentImageIndex: 0,
         }
@@ -514,6 +520,7 @@ export default {
                 
 
                 this.details = data;
+                console.log(this.details)
                 // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
 
                 this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);
@@ -642,19 +649,6 @@ export default {
     grid-template-columns: repeat(6, 1fr);
     grid-template-rows: repeat(3, 1fr);
 }
-/* .img_container {
-    padding: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: calc((100vh - 90px - 80px - 43px - 45px)/3);  /* 90px: navbar, 80px: optionsbar, 43px: tab, 37px: page 
-} */
-/* .img_container img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: cover;
-} */
 .page {
     display: flex;
     justify-content: center;
