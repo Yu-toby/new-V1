@@ -63,7 +63,7 @@ export default {
 }
 
 .his_list span {
-    border: 2px solid black;
+    /* border: 2px solid black; */
     display: flex;
     align-items: center;
     justify-content: center;

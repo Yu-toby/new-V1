@@ -41,7 +41,13 @@ import Detail from '@/components/results/detail.vue'
             <div class="historical_data">
                 <div class="list_content">
                     <div class="list_title">
-                        123
+                        <span id="img_name">圖片名稱</span>
+                        <span id="date">日期-時間</span>
+                        <span id="equipment_name">設備名稱</span>
+                        <span id="state">狀態</span>
+                        <span id="tmp_max">最大溫度</span>
+                        <span id="tmp_avg">平均溫度</span>
+                        <span id="tmp_min">最小溫度</span>
                     </div>
                     <div class="history_list" v-if="details && details.length > 0">
                         <div
@@ -281,10 +287,20 @@ export default {
 .list_title {
     width: 100%;
     height: 43px;
-    background-color: rgb(209, 129, 32);
+    background-color: rgb(105, 105, 105);
+    /* font-size: 20px; */
+    /* color: white; */
+    display: grid;
+    grid-template-columns: 2fr 2fr 1.5fr 1.5fr 1fr 1fr 1fr;
+}
+
+.list_title span {
+    /* border: 2px solid black; */
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 100%;
+    width: 100%;
     font-size: 20px;
     color: white;
 }
@@ -292,12 +308,10 @@ export default {
 .history_list {
     width: 100%;
     height:100%;
-    /* display: grid;
-    grid-template-rows: 1fr 1fr; */
     grid-gap: 10px;
-    padding: 10px;
-    /* border: 2px solid black; */
+    padding-top: 10px;
     overflow-y: scroll;
+    overflow: hidden;
 }
 
 /* 頁數標籤=============================================================== */
