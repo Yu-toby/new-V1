@@ -52,7 +52,7 @@ import Detail from '@/components/results/detail.vue'
                     <div class="history_list" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.infrared"
+                            :src="details.thermal"
                             :key="index"
                             @click="show(index)"
                         >
@@ -208,7 +208,7 @@ export default {
     computed: {
         currentImage() {
             this.images = [
-                this.details[this.showIndex].infrared,
+                this.details[this.showIndex].thermal,
                 this.details[this.showIndex].visible_light
             ]
             return this.images[this.currentImageIndex];
@@ -268,6 +268,8 @@ export default {
 /* 歷史資料列表============================================================= */
 .content {
     display: grid;
+    /* grid-template-rows: 1fr 43px; */
+    /* border: 2px solid black; */
 }
 
 .historical_data {

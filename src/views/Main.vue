@@ -103,13 +103,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.infrared"
+                            :src="details.thermal"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '正常' && details.time === uploadTime"
-                                :src="details.infrared"
+                                :src="details.thermal"
                                 :original_image="details.original_image"
                                 loading="lazy"
                             ></SmallPicture>
@@ -133,13 +133,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.infrared"
+                            :src="details.thermal"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '注意' && details.time === uploadTime"
-                                :src="details.infrared"
+                                :src="details.thermal"
                                 :original_image="details.original_image"
                             ></SmallPicture>
                         </div>
@@ -162,13 +162,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.infrared"
+                            :src="details.thermal"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '異常' && details.time === uploadTime"
-                                :src="details.infrared"
+                                :src="details.thermal"
                                 :original_image="details.original_image"
                             ></SmallPicture>
                         </div>
@@ -191,13 +191,13 @@ import * as XLSX from 'xlsx'
                     <div class="img_outside_container" v-if="details && details.length > 0">
                         <div
                             v-for="(details, index) in details"
-                            :src="details.infrared"
+                            :src="details.thermal"
                             :key="index"
                             @click="show(index)"
                         >
                             <SmallPicture
                                 v-if="details.result === '危險' && details.time === uploadTime"
-                                :src="details.infrared"
+                                :src="details.thermal"
                                 :original_image="details.original_image"
                             ></SmallPicture>
                         </div>
@@ -543,7 +543,7 @@ export default {
     computed: {
         currentImage() {
             this.images = [
-                this.details[this.showIndex].infrared,
+                this.details[this.showIndex].thermal,
                 this.details[this.showIndex].visible_light
             ]
             return this.images[this.currentImageIndex];
