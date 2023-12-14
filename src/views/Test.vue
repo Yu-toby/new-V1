@@ -1,67 +1,39 @@
 <template>
-  <div>
-      <div class="his_list">
-          <span id="img_name">
-            0{{ getImageName() }}
-          </span>
-          <span id="date">
-            1{{ describe?.time }}
-          </span>
-          <span id="equipment_name">
-            2{{ describe?.category  }}
-          </span>
-          <span id="state">
-            3{{ describe?.result }}
-          </span>
-          <span id="tmp_max">
-            4{{ describe?.max }}
-          </span>
-          <span id="tmp_avg">
-            5{{ describe?.avg }}
-          </span>
-          <span id="tmp_min">
-            6{{ describe?.min }}
-          </span>
-      </div>
-  </div>
+    <n-date-picker v-model:value="range" type="daterange" clearable />
+    <pre>{{ formattedRange }}</pre>
 </template>
+
 <script>
+import { ref } from 'vue'
+
 export default {
-  props: {
-      original_image: {
-          type: String,
-          default: ''
-      },
-      describe: {
-            type: Object,
-            default: () => ({})
+    data() {
+        return {
+            range: ref([Date.now(), Date.now()]),
+            date_start: '',
+            date_end: ''
         }
-  },
-  methods: {
-      getImageName() {
-          // 從 src 中獲取文件名稱
-          const fileName = this.original_image.split('\\').pop()
-          return fileName
-      }
-  }
+    },
+    computed: {
+        formattedRange() {
+            // 使用Date物件格式化選擇的日期區間
+            if (this.range.length === 2) {
+                this.date_start = this.formatDate(this.range[0])
+                this.date_end = this.formatDate(this.range[1])
+                return `${this.date_start} 至 ${this.date_end}`
+            } else {
+                return '未選擇日期區間'
+            }
+        }
+    },
+    methods: {
+        formatDate(timestamp) {
+            const dateObject = new Date(timestamp)
+            const year = dateObject.getFullYear()
+            const month = (dateObject.getMonth() + 1).toString().padStart(2, '0')
+            const day = dateObject.getDate().toString().padStart(2, '0')
+            return `${year}${month}${day}`
+        }
+    }
 }
 </script>
-<style scoped>
-.his_list {
-  background-color: rgb(209, 129, 32);
-  display: grid;
-  grid-template-columns: 2fr 2fr 1.5fr 1.5fr 1fr 1fr 1fr;
-  
-}
-
-.his_list span {
-  border: 2px solid black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-  font-size: 20px;
-  color: white;
-}
-</style>

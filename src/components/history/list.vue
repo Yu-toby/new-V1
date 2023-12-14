@@ -59,8 +59,9 @@ export default {
 .his_list {
     /* background-color: rgb(209, 129, 32); */
     display: grid;
-    grid-template-columns: 2fr 2fr 1.5fr 1.5fr 1fr 1fr 1fr;
+    grid-template-columns: 3fr 2fr 1.5fr 1.5fr 1fr 1fr 1fr;
     border-bottom: 2px solid rgba(0, 0, 0, 0.623);
+    padding: 5px;
 }
 
 .his_list span {

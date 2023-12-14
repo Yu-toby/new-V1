@@ -331,7 +331,7 @@ def page_information():
         # print("category_count:", category_count)
 
         response_data = {"data": data, "category_count": category_count}
-        print("response_data:", response_data)
+        # print("response_data:", response_data)
         return jsonify(response_data), 200
     
 @app.route('/tsmcserver/status_number', methods=['POST'])
@@ -365,9 +365,111 @@ def number_information():
         
         return jsonify(category_count), 200
 
+@app.route('/tsmcserver/history_page_information', methods=['POST'])
+def history_page_information():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取搜尋條件
+        category = request_data.get("category", "")
+        result = request_data.get("result", "")
+        time_record = collection_TimeRecord.find_one().get("time_record", "")
+        current_page = request_data.get("currentPage", 1)
+        pageSize = request_data.get("pageSize", 20)
+        
+        # print(category, result, page)
+
+        # 計算要跳過的文件數
+        skip_count = (current_page - 1) * pageSize
+
+        # 建立搜尋條件
+        if category == "全部" and result != "全部":
+            search_criteria = {"result": result, "time": time_record}
+        elif category != "全部" and result == "全部":
+            search_criteria = {"category": category, "time": time_record}
+        elif category == "全部" and result == "全部":
+            search_criteria = {"time": time_record}
+        else:
+            search_criteria = {"category": category, "result": result, "time": time_record}
+        # print('全部:', search_criteria)
+
+        data2 = list(collection.find(projection={"original_id": False}))
+        # print("data2:" , data2)
+
+        # 查詢並回傳結果
+        data = list(
+            collection.find(search_criteria, projection={"_id": False, "original_id": False})
+            .sort([("name", 1)])  # 依照 name 欄位升冪排序
+            .skip(skip_count)
+            .limit(pageSize)  # 限制回傳筆數
+        )        
+        print("data:")
+        for item in data:
+            print(item)
+
+        if not data:
+            # 如果集合為空，返回一個特定值或錯誤訊息
+            return jsonify({"status": "error", "message": "集合為空"})
+                
+        for data_item in data:
+            # 獲取 X、Y 座標
+            x1 = int(data_item.get("coordinate", {}).get("xmin", 0))
+            y1 = int(data_item.get("coordinate", {}).get("ymin", 0))
+            x2 = int(data_item.get("coordinate", {}).get("xmax", 0))
+            y2 = int(data_item.get("coordinate", {}).get("ymax", 0))
+
+            # 獲取圖片路徑
+            image_path = data_item.get("image", {}).get("thermal", "")
+
+            # 開啟圖片
+            original_image = Image.open(os.getcwd() + "/" + image_path)
+
+            # 創建一個可以繪製形狀的對象
+            draw = ImageDraw.Draw(original_image)
+
+            # 繪製方框
+            draw.rectangle([x1, y1, x2, y2], outline='red', width=5)
+
+            # 將圖像轉換為RGB模式
+            if original_image.mode == 'RGBA':
+                original_image = original_image.convert('RGB')
+
+            # 將圖像轉換為Base64字串
+            image_buffer = io.BytesIO()
+            original_image.save(image_buffer, format='JPEG')
+            image_base64 = base64.b64encode(image_buffer.getvalue()).decode()
+
+            data_item["time"] = data_item.get("time", "")
+            data_item["category"] = data_item.get("category", "")
+            data_item["max"] = round(float(data_item.get("temp", {}).get("max", 0)), 1)
+            data_item["avg"] = round(float(data_item.get("temp", {}).get("avg", 0)), 1)
+            data_item["min"] = round(float(data_item.get("temp", {}).get("min", 0)), 1)
+            data_item["result"] = data_item.get("result", "")
+            data_item["thermal"] = f"data:image/jpeg;base64,{image_base64}"
+            data_item["visible_light"] = data_item.get("image", {}).get("visible_light", "")
+            data_item["original_image"] = image_path
+
+        search_time_record = {"time": time_record}
+        data1 = list(collection.find(search_time_record, projection={"original_id": False}))
+        # print("data1:", data1)
+        
+        # 統計特定 category 對應四種 result 的數量
+        category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
+        for item1 in data1:
+            if item1["category"] == category:
+                category_count[category][item1["result"]] += 1
+
+        # print("category_count:", category_count)
+
+        response_data = {"data": data, "category_count": category_count}
+        # print("response_data:", response_data)
+        return jsonify(response_data), 200
+    
+
 def create_indexes():
     # 為 'tsmccollection' 集合建立名字和狀態的索引
     collection.create_index([("name", 1), ("status", 1), ("time", 1)])
+
 
 if __name__ == '__main__':
     create_indexes()  # 在應用程式啟動之前建立索引

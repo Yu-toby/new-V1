@@ -9,10 +9,10 @@ import Detail from '@/components/results/detail.vue'
         <div class="options_bar">
             <div class="date_selection">
                 <n-date-picker v-model:value="range" type="daterange" clearable />
-                <!-- <pre>{{ JSON.stringify(range) }}</pre> -->
+                <!-- <pre>{{ formattedRange }}</pre> -->
             </div>
             <div class="device_selection">
-                <select v-model="selectedOption" @change="getCategories(); updateStatusNumber()">
+                <select v-model="selectedOption" @change="getCategories()">
                     <option value disabled selected>請選擇類別</option>
                     <option
                         v-for="(category, index) in categories"
@@ -22,7 +22,7 @@ import Detail from '@/components/results/detail.vue'
                 </select>
             </div>
             <div class="state_selection">
-                <select v-model="StateOption" @change="getCategories(); updateStatusNumber()">
+                <select v-model="StateOption" @change="getCategories()">
                     <option value disabled selected>請選擇狀態</option>
                     <option
                         v-for="(state, index1) in Option"
@@ -49,50 +49,55 @@ import Detail from '@/components/results/detail.vue'
                         <span id="tmp_avg">平均溫度</span>
                         <span id="tmp_min">最小溫度</span>
                     </div>
-                    <div class="history_list" v-if="details && details.length > 0">
-                        <div
-                            v-for="(details, index) in details"
-                            :src="details.thermal"
-                            :key="index"
-                            @click="show(index)"
-                        >
-                            <HistoryList
-                                v-if="details.result === '正常'"
-                                :original_image="details.original_image"
-                                :date="details.time"
-                                :equipment_name="details.category"
-                                :state="details.result"
-                                :tmp_max="details.max"
-                                :tmp_avg="details.avg"
-                                :tmp_min="details.min"
-                            ></HistoryList>
+                    <div class="history_list">
+                        <div v-if="details && details.length > 0">
+                            <div
+                                v-for="(details, index) in details"
+                                :src="details.thermal"
+                                :key="index"
+                                @click="show(index)"
+                            >
+                                <HistoryList
+                                    v-if="details.result === StateOption || StateOption === '全部'"
+                                    :original_image="details.original_image"
+                                    :date="details.time"
+                                    :equipment_name="details.category"
+                                    :state="details.result"
+                                    :tmp_max="details.max"
+                                    :tmp_avg="details.avg"
+                                    :tmp_min="details.min"
+                                ></HistoryList>
+                            </div>
                         </div>
-                    </div>
-                    <!-- 祥細資料 -->
-                    <div v-if="details && details.length > 0">
-                        <Detail
-                            :src="currentImage"
-                            :bcolor="details[showIndex].result === '正常' ? 'rgb(226, 245, 215)' : details[showIndex].result === '注意' ? 'rgb(255, 243, 205)' : details[showIndex].result === '異常' ? 'rgb(248, 215, 178)' : 'rgb(245, 215, 215)'"
-                            :tbcolor="details[showIndex].result === '正常' ? 'rgb(124, 208, 72)' : details[showIndex].result === '注意' ? 'rgb(255, 200, 25)' : details[showIndex].result === '異常' ? 'rgb(191, 108, 17)' : 'rgb(181, 59, 59)'"
-                            :describe="details[showIndex]"
-                            v-show="showModal"
-                            @close="showModal = false"
-                            @change="changeImage"
-                        ></Detail>
-                    </div>
-                    <div v-else></div>
+                        <!-- 祥細資料 -->
+                        <div v-if="details && details.length > 0">
+                            <Detail
+                                :src="currentImage"
+                                :bcolor="details[showIndex].result === '正常' ? 'rgb(226, 245, 215)' : details[showIndex].result === '注意' ? 'rgb(255, 243, 205)' : details[showIndex].result === '異常' ? 'rgb(248, 215, 178)' : 'rgb(245, 215, 215)'"
+                                :tbcolor="details[showIndex].result === '正常' ? 'rgb(124, 208, 72)' : details[showIndex].result === '注意' ? 'rgb(255, 200, 25)' : details[showIndex].result === '異常' ? 'rgb(191, 108, 17)' : 'rgb(181, 59, 59)'"
+                                :describe="details[showIndex]"
+                                v-show="showModal"
+                                @close="showModal = false"
+                                @change="changeImage"
+                            ></Detail>
+                        </div>
+                        <div v-else></div>
+                    </div>                 
+                    
                     <!-- 頁數標籤 -->
-            <div class="page_selection">
-                <n-pagination
-                    v-model:page.sync="page"
-                    v-model:page-size.sync="pageSize"
-                    :display-order="['quick-jumper', 'pages', 'size-picker']"
-                    :page-count="100"
-                    show-quick-jumper
-                    show-size-picker
-                    :page-sizes="pageSizes"
-                />
-            </div>
+                    <div class="page_selection">
+                        <n-pagination
+                            v-model:page.sync="currentPage"
+                            v-model:page-size.sync="pageSize"
+                            :display-order="['quick-jumper', 'pages', 'size-picker']"
+                            :page-count="totalPage"
+                            show-quick-jumper
+                            show-size-picker
+                            :page-sizes="pageSizes"
+                            @update:page="UpdatePageInformation"
+                            @update:page-size="handlePageSizeChange"
+                        />
+                    </div>
                 </div>                
             </div>
 
@@ -109,19 +114,21 @@ export default {
     data() {
         return {
             // timestamp: ref(118313526e4),
-            range: ref([118313526e4, Date.now()]),
+            range: ref([Date.now(), Date.now()]),
+            date_start: '',
+            date_end: '',
+
             selectedOption: '', // 下拉選單標題
             StateOption: '', // 下拉選單標題
             categories: [], // 新增用來存放 MongoDB 中的類別選項
-            Option: ['正常', '注意', '異常', '危險'],
-            page: ref(1),
-            pageSize: ref(20),
+            Option: ['全部', '正常', '注意', '異常', '危險'],
             pageSizes: [
                 { label: '10 / page', value: 10 },
                 { label: '20 / page', value: 20 },
                 { label: '30 / page', value: 30 },
                 { label: '40 / page', value: 40 }
             ],
+            pageSize: 20,
 
             selectedTab:'',
 
@@ -132,6 +139,9 @@ export default {
                     
             images: [],
             currentImageIndex: 0,
+
+            totalPage: 10,
+            currentPage: 1,
         }
     },
     mounted() {
@@ -153,16 +163,6 @@ export default {
                 this.uploadTime = res.data
             })
         },
-        //更新狀態數字
-        updateStatusNumber() {
-            this.axios.post('/tsmcserver/status_number',{category: this.selectedOption === '全部' ? '全部' : this.selectedOption})
-            .then((res) => {
-                this.normal_Number = res.data[this.selectedOption]["正常"];
-                this.notice_Number = res.data[this.selectedOption]["注意"];
-                this.abnormal_Number = res.data[this.selectedOption]["異常"];
-                this.danger_Number = res.data[this.selectedOption]["危險"];
-            })
-        },
         // 獲取 MongoDB 中的類別選項
         getCategories() {
             this.axios.get('/tsmcserver/categories').then((res) => {
@@ -174,22 +174,24 @@ export default {
             })
             
         },
+        handlePageSizeChange(newPageSize) {
+            this.pageSize = newPageSize;
+            this.UpdatePageInformation();
+        },
         UpdatePageInformation() {
             // 在這裡可以發起 API 請求，獲取新頁碼對應的數據
-            this.axios.post('/tsmcserver/page_information', {
-                result: '正常',
+            this.axios.post('/tsmcserver/history_page_information', {
+                result: this.StateOption === '全部' ? '全部' : this.StateOption,
                 category: this.selectedOption === '全部' ? '全部' : this.selectedOption,
-                nor_currentPage: this.nor_currentPage,
-                not_currentPage: this.not_currentPage,
-                abn_currentPage: this.abn_currentPage,
-                dan_currentPage: this.dan_currentPage
+                currentPage: this.currentPage,
+                pageSize: this.pageSize,
             }).then(response => {
-                console.log(response.data);
+                // console.log(response.data);
                 const { data, category_count } = response.data;     //解構數值
                 
 
                 this.details = data;
-                console.log(this.details);
+                // console.log(this.details);
                 // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
 
                 // this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);
@@ -203,7 +205,14 @@ export default {
         changeImage() {
             // 在兩張圖片之間切換
             this.currentImageIndex = 1 - this.currentImageIndex;
-        }
+        },
+        formatDate(timestamp) {
+            const dateObject = new Date(timestamp);
+            const year = dateObject.getFullYear();
+            const month = (dateObject.getMonth() + 1).toString().padStart(2, '0');
+            const day = dateObject.getDate().toString().padStart(2, '0');
+            return `${year}${month}${day}`;
+        },
     },
     computed: {
         currentImage() {
@@ -212,6 +221,16 @@ export default {
                 this.details[this.showIndex].visible_light
             ]
             return this.images[this.currentImageIndex];
+        },
+        formattedRange() {
+            // 使用Date物件格式化選擇的日期區間
+            if (this.range.length === 2) {
+                this.date_start = this.formatDate(this.range[0])
+                this.date_end = this.formatDate(this.range[1])
+                return `${this.date_start} 至 ${this.date_end}`
+            } else {
+                return '未選擇日期區間'
+            }
         }
     }
 }
@@ -274,15 +293,14 @@ export default {
 
 .historical_data {
     display: grid;
-    grid-template-columns: 0.5fr 3fr 0.5fr;
+    grid-template-columns: 0.4fr 4fr 0.4fr;
 }
 
 .list_content {
     grid-column: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background-color: rgba(204, 204, 204, 0.74);
+    display: grid;
+    grid-template-rows: 43px 1fr 40px;
+    /* background-color: rgba(204, 204, 204, 0.74); */
 }
 
 .list_title {
@@ -292,7 +310,8 @@ export default {
     /* font-size: 20px; */
     /* color: white; */
     display: grid;
-    grid-template-columns: 2fr 2fr 1.5fr 1.5fr 1fr 1fr 1fr;
+    grid-template-columns: 3fr 2fr 1.5fr 1.5fr 1fr 1fr 1fr;
+    border-radius: 10px;
 }
 
 .list_title span {
@@ -308,18 +327,21 @@ export default {
 
 .history_list {
     width: 100%;
-    height:100%;
-    grid-gap: 10px;
-    padding-top: 10px;
-    overflow-y: scroll;
-    overflow: hidden;
+    /* height:100%; */
+    margin-top: 5px;
+    /* overflow-y: scroll; */
+    /* overflow: hidden; */
+    background-color: rgba(204, 204, 204, 0.74);
+    border-radius: 10px;
 }
 
 /* 頁數標籤=============================================================== */
 .page_selection {
     display: flex;
     justify-content: center;
-    align-items: flex-end;
-    /* background-color: rgba(204, 204, 204, 0.74); */
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.74);
+    margin: 3px 0px 1px 0px;
+    border-radius: 100px;
 }
 </style>
