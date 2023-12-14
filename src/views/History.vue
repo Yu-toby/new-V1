@@ -14,7 +14,7 @@ import Detail from '@/components/results/detail.vue'
                 <p>{{ date_end }}</p>
             </div>
             <div class="device_selection">
-                <select v-model="selectedOption" @change="getCategories()">
+                <select v-model="selectedOption">
                     <option value disabled selected>請選擇類別</option>
                     <option
                         v-for="(category, index) in categories"
@@ -24,7 +24,7 @@ import Detail from '@/components/results/detail.vue'
                 </select>
             </div>
             <div class="state_selection">
-                <select v-model="StateOption" @change="getCategories()">
+                <select v-model="StateOption" >
                     <option value disabled selected>請選擇狀態</option>
                     <option
                         v-for="(state, index1) in Option"
@@ -34,7 +34,7 @@ import Detail from '@/components/results/detail.vue'
                 </select>
             </div>
             <div class="check_button">
-                <el-button round color="#414141" plain>Search</el-button>
+                <el-button round color="#414141" plain @click="UpdatePageInformation();getCategories()">Search</el-button>
             </div>
         </div>
 

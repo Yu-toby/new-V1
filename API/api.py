@@ -384,7 +384,7 @@ def history_page_information():
         date_start = str(request_data.get("date_start", ""))
         date_end = str(request_data.get("date_end", ""))
 
-        print('date: ', (date_start), (date_end))
+        # print('date: ', (date_start), (date_end))
 
         # 計算要跳過的文件數
         skip_count = (current_page - 1) * pageSize
