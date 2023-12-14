@@ -8,6 +8,8 @@ from PIL import Image, ImageDraw
 import io
 import base64  # 引入 base64 模塊
 from collections import defaultdict  # 引入 defaultdict 模塊
+from datetime import datetime
+
 
 app = Flask(__name__)
 CORS(app)
@@ -256,10 +258,13 @@ def page_information():
         skip_count = (page - 1) * 18
 
         # 建立搜尋條件
-        if category == "全部":
-            search_criteria = {"result": result, "time": time_record}
-        else:
-            search_criteria = {"category": category, "result": result, "time": time_record}
+        search_criteria = {}
+        search_criteria["time"] = time_record
+        if category != "全部":
+            search_criteria["category"] = category
+
+        if result != "全部":
+            search_criteria["result"] = result
         # print('全部:', search_criteria)
 
         data2 = list(collection.find(projection={"original_id": False}))
@@ -376,22 +381,39 @@ def history_page_information():
         time_record = collection_TimeRecord.find_one().get("time_record", "")
         current_page = request_data.get("currentPage", 1)
         pageSize = request_data.get("pageSize", 20)
-        
-        # print(category, result, page)
+        date_start = str(request_data.get("date_start", ""))
+        date_end = str(request_data.get("date_end", ""))
+
+        print('date: ', (date_start), (date_end))
 
         # 計算要跳過的文件數
         skip_count = (current_page - 1) * pageSize
 
         # 建立搜尋條件
-        if category == "全部" and result != "全部":
-            search_criteria = {"result": result, "time": time_record}
-        elif category != "全部" and result == "全部":
-            search_criteria = {"category": category, "time": time_record}
-        elif category == "全部" and result == "全部":
-            search_criteria = {"time": time_record}
-        else:
-            search_criteria = {"category": category, "result": result, "time": time_record}
-        # print('全部:', search_criteria)
+        search_criteria = {}
+        if date_start and date_end:
+            # 將使用者輸入的日期轉換成 datetime 物件
+            start_datetime = datetime.strptime(date_start, "%Y%m%d")
+            end_datetime = datetime.strptime(date_end, "%Y%m%d")
+
+            # 進行 MongoDB 內的時間格式轉換，並只取日期部分
+            start_mongodb_date = start_datetime.strftime("%Y%m%d")
+            end_mongodb_date = end_datetime.strftime("%Y%m%d")
+
+            # 使用 MongoDB 內的時間格式進行範圍搜尋
+            search_criteria["time"] = {
+                "$gte": f"{start_mongodb_date}-0000",
+                "$lte": f"{end_mongodb_date}-2359"
+            }
+
+        if category != "全部":
+            search_criteria["category"] = category
+
+        if result != "全部":
+            search_criteria["result"] = result
+
+        
+        print('search_criteria:', search_criteria)
 
         data2 = list(collection.find(projection={"original_id": False}))
         # print("data2:" , data2)

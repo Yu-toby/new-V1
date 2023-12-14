@@ -8,8 +8,10 @@ import Detail from '@/components/results/detail.vue'
         <!-- 選項條 -->
         <div class="options_bar">
             <div class="date_selection">
-                <n-date-picker v-model:value="range" type="daterange" clearable />
+                <n-date-picker v-model:value="range" type="daterange" clearable @click="formattedRange"/>
                 <!-- <pre>{{ formattedRange }}</pre> -->
+                <!-- <p>{{ date_start }}</p> -->
+                <p>{{ date_end }}</p>
             </div>
             <div class="device_selection">
                 <select v-model="selectedOption" @change="getCategories()">
@@ -115,8 +117,8 @@ export default {
         return {
             // timestamp: ref(118313526e4),
             range: ref([Date.now(), Date.now()]),
-            date_start: '',
-            date_end: '',
+            date_start: Date.now(),
+            date_end: Date.now(),
 
             selectedOption: '', // 下拉選單標題
             StateOption: '', // 下拉選單標題
@@ -152,6 +154,28 @@ export default {
         //更四種新狀態數字
         // this.updateStatusNumber();
         this.UpdatePageInformation();
+
+        this.date_start = this.formatDate(this.range[0])
+        this.date_end = this.formatDate(this.range[1])
+    },
+    computed: {
+        currentImage() {
+            this.images = [
+                this.details[this.showIndex].thermal,
+                this.details[this.showIndex].visible_light
+            ]
+            return this.images[this.currentImageIndex];
+        },
+        formattedRange() {
+            // 使用Date物件格式化選擇的日期區間
+            if (this.range.length === 2) {
+                this.date_start = this.formatDate(this.range[0])
+                this.date_end = this.formatDate(this.range[1])
+                return `${this.date_start} 至 ${this.date_end}`
+            } else {
+                return '未選擇日期區間'
+            }
+        }
     },
     methods: {
         show(index) {
@@ -185,6 +209,8 @@ export default {
                 category: this.selectedOption === '全部' ? '全部' : this.selectedOption,
                 currentPage: this.currentPage,
                 pageSize: this.pageSize,
+                date_start: this.date_start,
+                date_end: this.date_end
             }).then(response => {
                 // console.log(response.data);
                 const { data, category_count } = response.data;     //解構數值
@@ -213,25 +239,6 @@ export default {
             const day = dateObject.getDate().toString().padStart(2, '0');
             return `${year}${month}${day}`;
         },
-    },
-    computed: {
-        currentImage() {
-            this.images = [
-                this.details[this.showIndex].thermal,
-                this.details[this.showIndex].visible_light
-            ]
-            return this.images[this.currentImageIndex];
-        },
-        formattedRange() {
-            // 使用Date物件格式化選擇的日期區間
-            if (this.range.length === 2) {
-                this.date_start = this.formatDate(this.range[0])
-                this.date_end = this.formatDate(this.range[1])
-                return `${this.date_start} 至 ${this.date_end}`
-            } else {
-                return '未選擇日期區間'
-            }
-        }
     }
 }
 </script>

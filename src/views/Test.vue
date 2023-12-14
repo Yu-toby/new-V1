@@ -1,6 +1,8 @@
 <template>
-    <n-date-picker v-model:value="range" type="daterange" clearable />
-    <pre>{{ formattedRange }}</pre>
+    <n-date-picker v-model:value="range" type="daterange" clearable @click="formattedRange"/>
+    <!-- <pre>{{ formattedRange }}</pre> -->
+    <p>{{ date_start }}</p>
+    <p>{{ date_end }}</p>
 </template>
 
 <script>
@@ -10,9 +12,13 @@ export default {
     data() {
         return {
             range: ref([Date.now(), Date.now()]),
-            date_start: '',
-            date_end: ''
+            date_start: Date.now(),
+            date_end: Date.now(),
         }
+    },
+    mounted() {
+        this.date_start = this.formatDate(this.range[0])
+        this.date_end = this.formatDate(this.range[1])
     },
     computed: {
         formattedRange() {
