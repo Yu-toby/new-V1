@@ -57,9 +57,10 @@ export default {
 
 <style scoped>
 .his_list {
-    background-color: rgb(209, 129, 32);
+    /* background-color: rgb(209, 129, 32); */
     display: grid;
     grid-template-columns: 2fr 2fr 1.5fr 1.5fr 1fr 1fr 1fr;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.623);
 }
 
 .his_list span {
@@ -70,6 +71,6 @@ export default {
     height: 100%;
     width: 100%;
     font-size: 20px;
-    color: white;
+    /* color: white; */
 }
 </style>

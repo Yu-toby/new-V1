@@ -81,10 +81,7 @@ import Detail from '@/components/results/detail.vue'
                         ></Detail>
                     </div>
                     <div v-else></div>
-                </div>                
-            </div>
-
-            <!-- 頁數標籤 -->
+                    <!-- 頁數標籤 -->
             <div class="page_selection">
                 <n-pagination
                     v-model:page.sync="page"
@@ -96,6 +93,10 @@ import Detail from '@/components/results/detail.vue'
                     :page-sizes="pageSizes"
                 />
             </div>
+                </div>                
+            </div>
+
+            
             
         </div>
     </div>
@@ -267,9 +268,6 @@ export default {
 /* 歷史資料列表============================================================= */
 .content {
     display: grid;
-    grid-template-rows: 1fr 43px;
-    /* border: 2px solid black; */
-    background-color: rgb(187, 187, 157);
 }
 
 .historical_data {
@@ -282,12 +280,13 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
+    background-color: rgba(204, 204, 204, 0.74);
 }
 
 .list_title {
     width: 100%;
     height: 43px;
-    background-color: rgb(105, 105, 105);
+    background-color: rgb(26, 26, 26);
     /* font-size: 20px; */
     /* color: white; */
     display: grid;
@@ -302,7 +301,7 @@ export default {
     height: 100%;
     width: 100%;
     font-size: 20px;
-    color: white;
+    color: rgb(255, 255, 255);
 }
 
 .history_list {
@@ -319,5 +318,6 @@ export default {
     display: flex;
     justify-content: center;
     align-items: flex-end;
+    /* background-color: rgba(204, 204, 204, 0.74); */
 }
 </style>
