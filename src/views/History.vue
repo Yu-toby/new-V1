@@ -34,7 +34,7 @@ import Detail from '@/components/results/detail.vue'
                 </select>
             </div>
             <div class="check_button">
-                <el-button round color="#414141" plain @click="UpdatePageInformation();getCategories()">Search</el-button>
+                <el-button round color="#414141" plain @click="UpdatePageInformation();">Search</el-button>
             </div>
         </div>
 
