@@ -11,7 +11,7 @@ import Detail from '@/components/results/detail.vue'
                 <n-date-picker v-model:value="range" type="daterange" clearable @click="formattedRange"/>
                 <!-- <pre>{{ formattedRange }}</pre> -->
                 <!-- <p>{{ date_start }}</p> -->
-                <p>{{ date_end }}</p>
+                <!-- <p>{{ date_end }}</p> -->
             </div>
             <div class="device_selection">
                 <select v-model="selectedOption">
@@ -65,9 +65,9 @@ import Detail from '@/components/results/detail.vue'
                                     :date="details.time"
                                     :equipment_name="details.category"
                                     :state="details.result"
-                                    :tmp_max="details.max"
-                                    :tmp_avg="details.avg"
-                                    :tmp_min="details.min"
+                                    :tmp_max="String(details.max)"
+                                    :tmp_avg="String(details.avg)"
+                                    :tmp_min="String(details.min)"
                                 ></HistoryList>
                             </div>
                         </div>
@@ -102,8 +102,6 @@ import Detail from '@/components/results/detail.vue'
                     </div>
                 </div>                
             </div>
-
-            
             
         </div>
     </div>
@@ -142,7 +140,7 @@ export default {
             images: [],
             currentImageIndex: 0,
 
-            totalPage: 10,
+            totalPage: 1,
             currentPage: 1,
         }
     },
@@ -218,7 +216,7 @@ export default {
 
                 this.details = data;
                 // console.log(this.details);
-                // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
+                this.totalPage = Math.ceil((category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"]) / this.pageSize);
 
                 // this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);
                 // this.not_totalPages = 10*Math.ceil(category_count[this.selectedOption]["注意"] / 18);
