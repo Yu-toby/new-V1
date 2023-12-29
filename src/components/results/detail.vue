@@ -1,3 +1,8 @@
+<script setup>
+import OverallTemplateBar from './overall-template-bar.vue';
+import IntervalTemplateBar from './interval-template-bar.vue';
+</script>
+
 <template lang="">
     <div id="modal0">
         <div class="modal-content0">
@@ -5,28 +10,42 @@
                 <p id="category-text">辨識類別：{{ describe?.category}}</p>
                 <div id="closeButton"><button type="button" class="btn-close" aria-label="Close" @click="closeModal"></button></div>
             </div>
-            <div id="details" :style="{ backgroundColor: bcolor }">
-                <table class="temperature-table0">
-                    <tr>
-                        <th id="top-table" :style="{ backgroundColor: tbcolor }">MAX</th>
-                        <th id="top-table" :style="{ backgroundColor: tbcolor }">AVG</th>
-                        <th id="top-table" :style="{ backgroundColor: tbcolor }">MIN</th>
-                    </tr>
-                    <tr>
-                        <th id="max-temperature">{{describe?.max}}℃</th>
-                        <th id="avg-temperature">{{describe?.avg}}℃</th>
-                        <th id="min-temperature">{{describe?.min}}℃</th>
-                    </tr>
-                </table>
-                <div class="change_image_btn">
-                    <button type="button" class="btn btn-secondary" @click="changeImage">熱影像 / 可見光</button>
-                </div>
-                <img :src="src" id="detail-picture"  :style="{ borderColor: tbcolor }">
+            <div id="details_con" :style="{ backgroundColor: bcolor }">
+                <OverallTemplateBar
+                    :overall_max_template="overallTmp"
+                    :pointer="overall_pointer"
+                ></OverallTemplateBar>
+                <div class="details">
+                    <table class="temperature-table0">
+                        <tr>
+                            <th id="top-table" :style="{ backgroundColor: tbcolor }">MAX</th>
+                            <th id="top-table" :style="{ backgroundColor: tbcolor }">AVG</th>
+                            <th id="top-table" :style="{ backgroundColor: tbcolor }">MIN</th>
+                        </tr>
+                        <tr>
+                            <th id="max-temperature">{{describe?.max}}℃</th>
+                            <th id="avg-temperature">{{describe?.avg}}℃</th>
+                            <th id="min-temperature">{{describe?.min}}℃</th>
+                        </tr>
+                    </table>
+                    <div class="change_image_btn">
+                        <button type="button" class="btn btn-secondary" @click="changeImage">熱影像 / 可見光</button>
+                    </div>
+                    <img :src="src" id="detail-picture"  :style="{ borderColor: tbcolor }">
+                </div>                
+                <IntervalTemplateBar
+                    :tbcolor="tbcolor"
+                    :interval_min_template="tmpArray[0]"
+                    :interval_max_template="tmpArray[1]"
+                    :barHeight="interval_barHeight"
+                    :pointer="interval_pointer"
+                ></IntervalTemplateBar>
             </div>
             <div id="result-field">
                 <p id="result-text">檢測結果：{{describe?.result}}</p>
             </div>
         </div> 
+        <button @click="GetTemperatureArray">觸發</button>
     </div>
 </template>
 <script>
@@ -52,13 +71,58 @@ export default {
     emit: [
         "close"
     ],
+    data() {
+        return {
+            temperature_array: [{}],
+            overallTmp: 0,
+            tmpArray: [],
+            overall_pointer: 0,
+            interval_pointer: 0,
+            interval_barHeight: 0,
+        }
+    },
+    mounted() {
+        this.GetTemperatureArray();
+    },
     methods: {
         closeModal() {
             this.$emit("close");
         },
         changeImage() {
             this.$emit("change");
-        }
+        },
+        GetTemperatureArray() {
+            this.axios.post('/tsmcserver/getTemperatureArray', {
+                name: this.describe?.category,
+                result: this.describe?.result
+            }).then(res => {
+                this.temperature_array = res.data;
+                this.overallTmp = this.temperature_array?.overall_tmp;
+                this.tmpArray = this.temperature_array?.tmp;
+                console.log(this.overallTmp);
+                console.log(this.tmpArray);
+                this.calculateOverallPointerPosition();
+                this.calculateIntervalPointerPosition();
+                this.calculateIntervalBarHeight();
+            }).catch(err => {
+                console.log(err);
+            })
+        },
+        calculateOverallPointerPosition() {
+            const pt = (this.describe?.max / this.overallTmp) * 100
+            this.overall_pointer = pt
+        },
+        calculateIntervalPointerPosition() {
+            const pt =
+                ((this.describe?.max - this.tmpArray[0]) /
+                    (this.tmpArray[1] - this.tmpArray[0])) *
+                100
+            this.interval_pointer = pt
+        },
+        calculateIntervalBarHeight() {
+            const pt = (this.tmpArray[1] - this.tmpArray[0])
+            this.interval_barHeight = pt
+        },
     },
 }
 </script>
@@ -115,13 +179,22 @@ export default {
     justify-content: start;
 }
 
-#details {
+#details_con {
     margin: 0;
     /* background-color: rgb(226, 245, 215); */
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.details {
+    margin: 0;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-around;
+    /* border: 1px solid black; */
 }
 
 .temperature-table0 {

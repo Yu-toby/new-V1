@@ -43,6 +43,7 @@ collection = db['tsmccollection']
 collection_unidentified = db['Unidentified']
 collection1 = db['if_detect']
 collection_TimeRecord = db['time_record']
+collection_temperature = db['temperature_threshold']
 
 # 確保上傳目錄存在
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -487,6 +488,40 @@ def history_page_information():
         # print("response_data:", response_data)
         return jsonify(response_data), 200
     
+
+@app.route('/tsmcserver/getTemperatureArray', methods=['POST'])
+def getTemperatureArray():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取搜尋條件
+        name = request_data.get("name", "")
+        result = request_data.get("result", "")
+        print("name1:", name, "result:", result)
+
+        # 在 MongoDB 中查找符合條件的資料
+        temp_data = collection_temperature.find_one({"name": name})
+
+        if not temp_data:
+            return jsonify({"error": "找不到相應的"+ name + "資料"}), 404
+
+        overall_tmp = temp_data.get("overall_tmp", [])
+        # 根據 result 返回對應的 tmp
+        if result == '正常':
+            tmp = temp_data.get("normal_tmp", [])
+        elif result == '注意':
+            tmp = temp_data.get("notice_tmp", [])
+        elif result == '異常':
+            tmp = temp_data.get("abnormal_tmp", [])
+        elif result == '危險':
+            tmp = temp_data.get("danger_tmp", [])
+        else:
+            return jsonify({"error": "無效的 result"}), 400
+
+        print("overall_tmp:", overall_tmp, "tmp:", tmp)
+        # 回傳資料
+        return jsonify({"overall_tmp": overall_tmp, "tmp": tmp})
+
 
 def create_indexes():
     # 為 'tsmccollection' 集合建立名字和狀態的索引

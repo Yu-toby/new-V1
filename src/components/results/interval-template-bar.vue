@@ -1,47 +1,33 @@
 <template>
     <div class="con">
-        <p class="word">最小溫度</p>
-        <div class="bar" :style="{ height: barHeight, backgroundColor: tbcolor }">
-            <div class="pointer" :style="{ top: pointerPosition + '%' }"></div>
+        <p class="word">{{interval_min_template}}℃</p>
+        <div class="bar" :style="{ backgroundColor: tbcolor }">
+            <div class="pointer" :style="{ top: pointer + '%' }"></div>
         </div>
-        <p class="word">最大溫度</p>
+        <p class="word">{{interval_max_template}}℃</p>
     </div>
-
-    <!-- <input v-model="point" type="number" min="0" max="100" @input="updatePointerPosition" /> -->
 </template>
     
     <script>
-import { ref } from 'vue'
-
 export default {
-    data() {
-        return {
-            point: 0,
-            device_temperature: 176,
-            interval_min_template: 150,
-            interval_max_template: 180
-        }
-    },
-    mounted() {
-        this.calculatePointerPosition()
-    },
-    computed: {
-        pointerPosition() {
-            return this.point
+    props: {
+        tbcolor: {
+            type: String,
+            default: ''
         },
-        barHeight() {
-            return this.interval_max_template - this.interval_min_template
+        interval_min_template: {
+            type: Number,
+        },
+        interval_max_template: {
+            type: Number,
+        },
+        barHeight: {
+            type: Number,
+        },
+        pointer: {
+            type: Number,
         }
     },
-    methods: {
-        calculatePointerPosition() {
-            const pt =
-                ((this.device_temperature - this.interval_min_template) /
-                    (this.interval_max_template - this.interval_min_template)) *
-                100
-            this.point = pt
-        }
-    }
 }
 </script>
     
@@ -51,15 +37,15 @@ export default {
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    width: 50px;
-    height: 300px;
+    width: 60px;
+    height: 400px;
 }
 .bar {
     position: relative;
     display: flex;
     flex-direction: column;
     width: 20px;
-    height: 300px;
+    height: 400px;
     border: 1px solid #000000;
     background-color: #1a18183a;
 }
@@ -73,7 +59,7 @@ export default {
 }
 .word {
     margin: 0;
-    font-size: 12px;
+    font-size: 15px;
     font-weight: bold;
 }
 </style>

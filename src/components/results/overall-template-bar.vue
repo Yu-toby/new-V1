@@ -1,68 +1,46 @@
 <template>
     <div class="con">
-        <p class="word">最小溫度</p>
-        <div class="bar" :style="{ height: barHeight }">
+        <p class="word">0℃</p>
+        <div class="bar">
             <div class="normal"></div>
             <div class="notice"></div>
             <div class="abnormal"></div>
             <div class="danger"></div>
-            <div class="pointer" :style="{ top: pointerPosition + '%' }"></div>
+            <div class="pointer" :style="{ top: pointer + '%' }"></div>
         </div>
-        <p class="word">最大溫度</p>
+        <p class="word">{{overall_max_template}}℃</p>
     </div>
-
-    <!-- <input v-model="point" type="number" min="0" max="100" @input="updatePointerPosition" /> -->
 </template>
-    
-    <script>
-import { ref } from 'vue'
-
+      
+<script>
 export default {
-    data() {
-        return {
-            point: 0,
-            device_temperature: 176,
-            overall_max_template: 300,
-
-            interval_min_template: 150,
-            interval_max_template: 220
-        }
-    },
-    mounted() {
-        this.calculatePointerPosition()
-    },
-    computed: {
-        pointerPosition() {
-            return this.point
+    props: {
+      overall_max_template: {
+            type: Number,
         },
-        barHeight() {
-            return this.overall_max_template
+        pointer: {
+            type: Number,
         }
+
     },
-    methods: {
-        calculatePointerPosition() {
-            const pt = (this.device_temperature / this.overall_max_template) * 100
-            this.point = pt
-        }
-    }
 }
 </script>
-    
-    <style scoped>
+      
+      <style scoped>
 .con {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    width: 50px;
-    height: 300px;
+    width: 60px;
+    height: 400px;
 }
 .bar {
     position: relative;
     display: flex;
     flex-direction: column;
     width: 20px;
-    height: 300px;
+    height: 400px;
     border: 1px solid #000000;
     background-color: #1a18183a;
 }
@@ -101,8 +79,8 @@ export default {
 }
 .word {
     margin: 0;
-    font-size: 12px;
+    font-size: 15px;
     font-weight: bold;
 }
 </style>
-    
+      
