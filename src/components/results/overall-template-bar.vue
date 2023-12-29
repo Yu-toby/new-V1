@@ -2,10 +2,10 @@
     <div class="con">
         <p class="word">0℃</p>
         <div class="bar">
-            <div class="normal"></div>
-            <div class="notice"></div>
-            <div class="abnormal"></div>
-            <div class="danger"></div>
+            <div class="normal" :style="{ height: normal_height + '%' }"></div>
+            <div class="notice" :style="{ height: notice_height + '%' }"></div>
+            <div class="abnormal" :style="{ height: abnormal_height + '%' }"></div>
+            <div class="danger" :style="{ height: danger_height + '%' }"></div>
             <div class="pointer" :style="{ top: pointer + '%' }"></div>
         </div>
         <p class="word">{{overall_max_template}}℃</p>
@@ -15,14 +15,25 @@
 <script>
 export default {
     props: {
-      overall_max_template: {
-            type: Number,
+        overall_max_template: {
+            type: Number
         },
         pointer: {
-            type: Number,
+            type: Number
+        },
+        normal_height: {
+            type: Number
+        },
+        notice_height: {
+            type: Number
+        },
+        abnormal_height: {
+            type: Number
+        },
+        danger_height: {
+            type: Number
         }
-
-    },
+    }
 }
 </script>
       
@@ -47,25 +58,25 @@ export default {
 
 .normal {
     width: 100%;
-    height: 25%;
+    /* height: 25%; */
     background-color: rgb(118, 181, 75);
 }
 
 .notice {
     width: 100%;
-    height: 25%;
+    /* height: 25%; */
     background-color: rgb(255, 195, 1);
 }
 
 .abnormal {
     width: 100%;
-    height: 25%;
+    /* height: 25%; */
     background-color: rgb(234, 108, 22);
 }
 
 .danger {
     width: 100%;
-    height: 25%;
+    /* height: 25%; */
     background-color: rgb(234, 42, 22);
 }
 

@@ -14,6 +14,10 @@ import IntervalTemplateBar from './interval-template-bar.vue';
                 <OverallTemplateBar
                     :overall_max_template="overallTmp"
                     :pointer="overall_pointer"
+                    :normal_height="normal_height"
+                    :notice_height="notice_height"
+                    :abnormal_height="abnormal_height"
+                    :danger_height="danger_height"
                 ></OverallTemplateBar>
                 <div class="details">
                     <table class="temperature-table0">
@@ -79,6 +83,14 @@ export default {
             overall_pointer: 0,
             interval_pointer: 0,
             interval_barHeight: 0,
+            nor_height: [],
+            not_height: [],
+            abn_height: [],    
+            dan_height: [],
+            normal_height: 0,
+            notice_height: 0,
+            abnormal_height: 0,
+            danger_height: 0,
         }
     },
     mounted() {
@@ -99,11 +111,15 @@ export default {
                 this.temperature_array = res.data;
                 this.overallTmp = this.temperature_array?.overall_tmp;
                 this.tmpArray = this.temperature_array?.tmp;
-                console.log(this.overallTmp);
-                console.log(this.tmpArray);
+                this.nor_height = this.temperature_array?.normal_tmp;
+                this.not_height = this.temperature_array?.notice_tmp;
+                this.abn_height = this.temperature_array?.abnormal_tmp;
+                this.dan_height = this.temperature_array?.danger_tmp;
+
                 this.calculateOverallPointerPosition();
                 this.calculateIntervalPointerPosition();
                 this.calculateIntervalBarHeight();
+                this.calculateStateHeight();
             }).catch(err => {
                 console.log(err);
             })
@@ -115,13 +131,19 @@ export default {
         calculateIntervalPointerPosition() {
             const pt =
                 ((this.describe?.max - this.tmpArray[0]) /
-                    (this.tmpArray[1] - this.tmpArray[0])) *
-                100
+                    (this.tmpArray[1] - this.tmpArray[0])) * 100
             this.interval_pointer = pt
         },
         calculateIntervalBarHeight() {
             const pt = (this.tmpArray[1] - this.tmpArray[0])
             this.interval_barHeight = pt
+        },
+        calculateStateHeight() {            
+            this.normal_height = ((this.nor_height[1] - this.nor_height[0]) / this.overallTmp) * 100;
+            this.notice_height = ((this.not_height[1] - this.not_height[0]) / this.overallTmp) * 100;
+            this.abnormal_height = ((this.abn_height[1] - this.abn_height[0]) / this.overallTmp) * 100;
+            this.danger_height = ((this.dan_height[1] - this.dan_height[0]) / this.overallTmp) * 100;
+            console.log(this.normal_height, this.notice_height, this.abnormal_height, this.danger_height);
         },
     },
 }

@@ -506,6 +506,10 @@ def getTemperatureArray():
             return jsonify({"error": "找不到相應的"+ name + "資料"}), 404
 
         overall_tmp = temp_data.get("overall_tmp", [])
+        normal_tmp = temp_data.get("normal_tmp", [])
+        notice_tmp = temp_data.get("notice_tmp", [])
+        abnormal_tmp = temp_data.get("abnormal_tmp", [])
+        danger_tmp = temp_data.get("danger_tmp", [])
         # 根據 result 返回對應的 tmp
         if result == '正常':
             tmp = temp_data.get("normal_tmp", [])
@@ -520,7 +524,7 @@ def getTemperatureArray():
 
         print("overall_tmp:", overall_tmp, "tmp:", tmp)
         # 回傳資料
-        return jsonify({"overall_tmp": overall_tmp, "tmp": tmp})
+        return jsonify({"overall_tmp": overall_tmp, "tmp": tmp, "normal_tmp": normal_tmp, "notice_tmp": notice_tmp, "abnormal_tmp": abnormal_tmp, "danger_tmp": danger_tmp}), 200
 
 
 def create_indexes():
