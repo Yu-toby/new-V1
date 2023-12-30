@@ -49,7 +49,6 @@ import IntervalTemplateBar from './interval-template-bar.vue';
                 <p id="result-text">檢測結果：{{describe?.result}}</p>
             </div>
         </div> 
-        <button @click="GetTemperatureArray">觸發</button>
     </div>
 </template>
 <script>
@@ -75,6 +74,14 @@ export default {
     emit: [
         "close"
     ],
+    watch: {
+        describe: {     // 監聽describe的變化
+            handler() { // 當describe有變化時，執行以下function
+                this.GetTemperatureArray();
+            },
+            deep: true  
+        }
+    },
     data() {
         return {
             temperature_array: [{}],
@@ -104,6 +111,7 @@ export default {
             this.$emit("change");
         },
         GetTemperatureArray() {
+            console.log("GetTemperatureArray")
             this.axios.post('/tsmcserver/getTemperatureArray', {
                 name: this.describe?.category,
                 result: this.describe?.result
@@ -143,7 +151,7 @@ export default {
             this.notice_height = ((this.not_height[1] - this.not_height[0]) / this.overallTmp) * 100;
             this.abnormal_height = ((this.abn_height[1] - this.abn_height[0]) / this.overallTmp) * 100;
             this.danger_height = ((this.dan_height[1] - this.dan_height[0]) / this.overallTmp) * 100;
-            console.log(this.normal_height, this.notice_height, this.abnormal_height, this.danger_height);
+            // console.log(this.normal_height, this.notice_height, this.abnormal_height, this.danger_height);
         },
     },
 }

@@ -111,7 +111,6 @@ import * as XLSX from 'xlsx'
                                 v-if="details.result === '正常' && details.time === uploadTime"
                                 :src="details.thermal"
                                 :original_image="details.original_image"
-                                loading="lazy"
                             ></SmallPicture>
                         </div>
                     </div>
@@ -215,7 +214,7 @@ import * as XLSX from 'xlsx'
                         </div>
                     </div>
                 </div>
-                <!-- 祥細資料 -->
+                <!-- 詳細資料 -->
                 <div v-if="details && details.length > 0">
                     <Detail
                         :src="currentImage"
@@ -538,7 +537,7 @@ export default {
         changeImage() {
             // 在兩張圖片之間切換
             this.currentImageIndex = 1 - this.currentImageIndex;
-        }
+        },
     },
     computed: {
         currentImage() {
