@@ -457,13 +457,21 @@ export default {
         },
         //更新狀態數字
         updateStatusNumber() {
-            this.axios.post('/tsmcserver/status_number',{category: this.selectedOption === '全部' ? '全部' : this.selectedOption})
-            .then((res) => {
-                this.normal_Number = res.data[this.selectedOption]["正常"];
-                this.notice_Number = res.data[this.selectedOption]["注意"];
-                this.abnormal_Number = res.data[this.selectedOption]["異常"];
-                this.danger_Number = res.data[this.selectedOption]["危險"];
-            })
+            if (this.selectedOption !== '') {
+                this.axios.post('/tsmcserver/status_number',{category: this.selectedOption === '全部' ? '全部' : this.selectedOption})
+                .then((res) => {
+                    console.log(res.data);
+                    this.normal_Number = res.data[this.selectedOption]["正常"];
+                    this.notice_Number = res.data[this.selectedOption]["注意"];
+                    this.abnormal_Number = res.data[this.selectedOption]["異常"];
+                    this.danger_Number = res.data[this.selectedOption]["危險"];
+                }).catch((error) => {
+                    console.log(error);
+                });
+            } else {
+                console.log("category is empty");
+                return;
+            }
         },
         // 獲取 MongoDB 中的類別選項
         getCategories() {
