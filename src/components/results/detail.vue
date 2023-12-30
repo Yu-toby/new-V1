@@ -112,25 +112,31 @@ export default {
         },
         GetTemperatureArray() {
             console.log("GetTemperatureArray")
-            this.axios.post('/tsmcserver/getTemperatureArray', {
-                name: this.describe?.category,
-                result: this.describe?.result
-            }).then(res => {
-                this.temperature_array = res.data;
-                this.overallTmp = this.temperature_array?.overall_tmp;
-                this.tmpArray = this.temperature_array?.tmp;
-                this.nor_height = this.temperature_array?.normal_tmp;
-                this.not_height = this.temperature_array?.notice_tmp;
-                this.abn_height = this.temperature_array?.abnormal_tmp;
-                this.dan_height = this.temperature_array?.danger_tmp;
-
-                this.calculateOverallPointerPosition();
-                this.calculateIntervalPointerPosition();
-                this.calculateIntervalBarHeight();
-                this.calculateStateHeight();
-            }).catch(err => {
-                console.log(err);
-            })
+            console.log(this.describe?.category, this.describe?.result)
+            if (this.describe?.category !== undefined && this.describe?.result !== undefined) {
+                this.axios.post('/tsmcserver/getTemperatureArray', {
+                    name: this.describe?.category || '',
+                    result: this.describe?.result || ''
+                }).then(res => {
+                    this.temperature_array = res.data;
+                    this.overallTmp = this.temperature_array?.overall_tmp;
+                    this.tmpArray = this.temperature_array?.tmp;
+                    this.nor_height = this.temperature_array?.normal_tmp;
+                    this.not_height = this.temperature_array?.notice_tmp;
+                    this.abn_height = this.temperature_array?.abnormal_tmp;
+                    this.dan_height = this.temperature_array?.danger_tmp;
+    
+                    this.calculateOverallPointerPosition();
+                    this.calculateIntervalPointerPosition();
+                    this.calculateIntervalBarHeight();
+                    this.calculateStateHeight();
+                }).catch(err => {
+                    console.log(err);
+                })
+            } else {
+                console.log("category or result is empty");
+                return; 
+            }
         },
         calculateOverallPointerPosition() {
             const pt = (this.describe?.max / this.overallTmp) * 100
