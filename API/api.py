@@ -3,7 +3,7 @@ from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
 import os  # 引入 os 模塊
-import datetime # 引入 datetime 模塊
+import datetime as dt # 引入 datetime 模塊
 from PIL import Image, ImageDraw
 import io
 import base64  # 引入 base64 模塊
@@ -110,7 +110,7 @@ def todo():
         images = request.files.getlist('image')
 
         # 檢查並更新 file_count
-        current_date = datetime.date.today().strftime('%Y%m%d')
+        current_date = dt.date.today().strftime('%Y%m%d')
         new_filename = f'{current_date}-{str(file_count).zfill(3)}'
 
         while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], new_filename)):
@@ -142,12 +142,12 @@ def todo():
         time_record = collection_TimeRecord.find_one()
         if time_record:
             # time_record = time_record.get("time_record", "")
-            time_record = datetime.datetime.today().strftime('%Y%m%d-%H%M')
+            time_record = dt.datetime.today().strftime('%Y%m%d-%H%M')
             collection_TimeRecord.update_one({}, {"$set": {"time_record": time_record}})
 
         # 插入數據到 MongoDB 
         result = collection_unidentified.insert_one({
-            "time": datetime.datetime.today().strftime('%Y%m%d-%H%M'),
+            "time": dt.datetime.today().strftime('%Y%m%d-%H%M'),
             "image": image_filenames,
             "processed": False})
         
@@ -331,6 +331,8 @@ def page_information():
         # 統計特定 category 對應四種 result 的數量
         category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
         for item1 in data1:
+            if category == "全部":
+                category_count["全部"][item1["result"]] += 1
             if item1["category"] == category:
                 category_count[category][item1["result"]] += 1
 
@@ -479,6 +481,8 @@ def history_page_information():
         # 統計特定 category 對應四種 result 的數量
         category_count = defaultdict(lambda: {"正常": 0, "注意": 0, "異常": 0, "危險": 0})
         for item1 in data1:
+            if category == "全部":
+                category_count["全部"][item1["result"]] += 1
             if item1["category"] == category:
                 category_count[category][item1["result"]] += 1
 
