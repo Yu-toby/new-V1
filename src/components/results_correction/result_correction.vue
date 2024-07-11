@@ -2,12 +2,12 @@
     <div id="modal0">
         <div class="modal-content0">
             <div id="content_header">
-                <p id="header_text">圖片名稱：</p>
+                <p id="header_text">圖片名稱：{{ getImageName() }}</p>
             </div>
             <div id="content_body">
                 <div class="show_img" ref="showImg">
                     <div class="img_frame">
-                        <img src="https://fakeimg.pl/640x480/F3C419/" loading="lazy" ref="image" @load="onImageLoad">
+                        <img :src="src" loading="lazy" ref="image" @load="onImageLoad">
                         <canvas ref="canvas" class="canvas"></canvas>
                     </div>
                     
@@ -72,8 +72,19 @@
 
 <script>
 export default {
+    props:{
+        src: {
+            type: String,
+            required: ''
+        },
+        details: {
+            type: Object,
+            default: () => ({})
+        }
+    },
     data() {
         return {
+            // 純功能操作==========================================================================
             tableData: [],
             device_name_list: [
                 { value: '電阻', label: '電阻' },
@@ -90,7 +101,31 @@ export default {
             startX: 0,
             startY: 0,
             currentRect: null
+
+            // 資料回傳後==========================================================================
         };
+    },
+    watch: {
+        details: {     // 監聽describe的變化
+            handler() { // 當describe有變化時，執行以下function
+                this.initializeTableData();
+            },
+            deep: true  
+        }
+    },
+    mounted() {
+        // this.canvas = this.$refs.canvas;
+        // this.ctx = this.canvas.getContext('2d');
+        // this.updateCanvasSize();
+        // this.initializeTableData();
+        // window.addEventListener('resize', this.updateCanvasSize);
+
+        this.canvas = this.$refs.canvas;
+        this.ctx = this.canvas.getContext('2d');
+        window.addEventListener('resize', this.updateCanvasSize);
+        // 確保在圖片加載後更新畫布尺寸和矩形框
+        this.$refs.image.addEventListener('load', this.onImageLoad);
+        this.initializeTableData();
     },
     methods: {
         cancel() {
@@ -100,10 +135,40 @@ export default {
             this.$emit('close');
             console.log(this.tableData);
         },
+        getImageName() {
+            // 從 src 中獲取文件名稱
+            const fileName = this.src.split('\\').pop();
+            return fileName;
+        },
+        initializeTableData() {
+            if (this.details && this.details.result_dataset) {
+                this.details.result_dataset.forEach((item, index) => {
+                    this.tableData.push({
+                        device_name: item.category || '',
+                        number_id: this.item_number++, // 分配唯一編號
+                        startX: item.coordinate.xmin,
+                        startY: item.coordinate.ymin,
+                        endX: item.coordinate.xmax,
+                        endY: item.coordinate.ymax
+                    });
+                    this.rectangles.push({
+                        id: this.tableData[index].number_id,
+                        x: item.coordinate.xmin,
+                        y: item.coordinate.ymin,
+                        width: item.coordinate.xmax - item.coordinate.xmin,
+                        height: item.coordinate.ymax - item.coordinate.ymin
+                    });
+                    this.drawRectangles();
+                });
+                this.onAddItem();
+            }
+        },
+// 功能操作區***************************************************************************************
         onAddItem() {
             const item_number = this.item_number++;
             this.tableData.push({
                 device_name: '',
+                
                 number_id: item_number, // 分配唯一編號
                 startX: null,
                 startY: null,
@@ -141,11 +206,9 @@ export default {
         },
         // 繪製方框==========================================================================
         onImageLoad() {
-            this.canvas = this.$refs.canvas;
-            this.ctx = this.canvas.getContext('2d');
+            console.log('image loaded');
             this.updateCanvasSize();
-
-            window.addEventListener('resize', this.updateCanvasSize);
+            this.drawRectangles();  // 確保圖片加載後繪製矩形框
             this.canvas.addEventListener('mousedown', this.onMouseDown);
             this.canvas.addEventListener('mousemove', this.onMouseMove);
             this.canvas.addEventListener('mouseup', this.onMouseUp);
@@ -159,16 +222,12 @@ export default {
             this.canvas.style.height = `${img.clientHeight}px`;
             this.canvas.style.left = rect.left;
             this.canvas.style.top = rect.top;
-            // this.drawRectangles();
         },
         onMouseDown(e) {
             const rect = this.canvas.getBoundingClientRect();
             this.startX = e.clientX - rect.left;
             this.startY = e.clientY - rect.top;
             this.drawing = true;
-            // this.currentIndex = this.rectangles.length - 1;
-            // console.log(this.rectangles);
-            // console.log(this.currentIndex);
         },
         onMouseMove(e) {
             if (!this.drawing) return;
@@ -178,7 +237,6 @@ export default {
 
             this.currentRect = {
                 id: this.rectangles[this.rectangles.length - 1].id,
-
                 x: this.startX,
                 y: this.startY,
                 width: mouseX - this.startX,
@@ -186,17 +244,6 @@ export default {
             };
             this.rectangles[this.rectangles.length - 1] = this.currentRect;
             this.drawRectangles();
-            this.ctx.strokeStyle = 'red';
-            this.ctx.strokeRect(
-                this.currentRect.x,
-                this.currentRect.y,
-                this.currentRect.width,
-                this.currentRect.height
-            );
-
-            this.ctx.fillStyle = 'red';
-            this.ctx.font = '16px Arial';
-            this.ctx.fillText(this.currentRect.id, this.currentRect.x + 2, this.currentRect.y + 16);
         },
         onMouseUp(e) {
             if (this.drawing) {
@@ -209,8 +256,6 @@ export default {
                 const endX = e.clientX - rect.left;
                 const endY = e.clientY - rect.top;
                 
-                console.log('index', this.currentIndex);
-                console.log('rectangles', this.rectangles);
                 if (this.currentIndex !== -1) {
                     this.rectangles[this.currentIndex] = { ...this.currentRect, id: this.rectangles[this.currentIndex].id };
                     this.tableData[this.currentIndex].startX = this.startX;
@@ -226,11 +271,12 @@ export default {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.rectangles.forEach(rect => {
                 if (rect) {
+                    // console.log(`Drawing rectangle ID: ${rect.id}`, rect);  // 調試信息
                     this.ctx.strokeStyle = 'red';
                     this.ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
-
                     this.ctx.fillStyle = 'red';
                     this.ctx.font = '16px Arial';
+                    // console.log(`Drawing text at (${rect.x + 2}, ${rect.y + 16}): ID: ${rect.id}`);  // 調試信息
                     this.ctx.fillText(rect.id, rect.x + 2, rect.y + 16);
                 }
             });
@@ -253,6 +299,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 10;
 }
 .modal-content0 {
     padding: 0;

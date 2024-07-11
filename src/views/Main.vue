@@ -13,7 +13,8 @@ import * as XLSX from 'xlsx'
                     id="fileInput"
                     ref="fileInput"
                     multiple
-                    accept=".jpg, .jpeg, .png"
+                    accept="image/*"
+                    max-size="100"
                 />
                 <button
                     @click="uploadFiles"
@@ -522,12 +523,12 @@ export default {
                 abn_currentPage: this.abn_currentPage,
                 dan_currentPage: this.dan_currentPage
             }).then(response => {
-                console.log(response.data);
+                console.log("response:",response.data);
                 const { data, category_count } = response.data;     //解構數值
                 
 
                 this.details = data;
-                console.log(this.details)
+                console.log("details:",this.details)
                 // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
 
                 this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);

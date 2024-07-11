@@ -18,6 +18,6 @@ export default {}
         display: grid;
         height: 100vh;
         grid-template-rows: 55px 1fr 35px;
-        background-color: #ffffff;
+        background-color: #FFFFFF;
     }
 </style>

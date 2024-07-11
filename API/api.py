@@ -30,6 +30,8 @@ MONGO_DBNAME = getEnvironmentVariable('MONGO_DBNAME', "tsmcdatabase")
 mongo_uri = f"mongodb://{MONGO_HOST}:{MONGO_PORT}"
 
 app.config["SECRET_KEY"] = getEnvironmentVariable('SECRET_KEY',"")  # 自己用的時候改這樣：('SECRET_KEY',"")  給善淜：('SECRET_KEY')
+# parent_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# UPLOAD_FOLDER = os.path.join(parent_folder, "uploads")
 UPLOAD_FOLDER = getEnvironmentVariable('UPLOAD_FOLDER', "uploads")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -44,6 +46,7 @@ collection_unidentified = db['Unidentified']
 collection1 = db['if_detect']
 collection_TimeRecord = db['time_record']
 collection_temperature = db['temperature_threshold']
+col_ori_identification_result = db['original_identification_result']
 
 # 確保上傳目錄存在
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -169,26 +172,65 @@ def todo():
     return jsonify({"status": "error"})
 
 # 新增一個路由來獲取 MongoDB 中的 "category" 選項
-@app.route('/tsmcserver/categories', methods=['GET'])
+@app.route('/tsmcserver/categories', methods=['GET', 'POST'])
 def get_categories():    
     # 讀取時間紀錄
-    time_record_document = collection_TimeRecord.find_one()
-    
-    if time_record_document:
-        time_record = time_record_document.get("time_record", "")
-
-        # 讀取與時間記錄相同時間的所有數據
-        matching_data = collection.find({"time": time_record})
+    if request.method == 'GET':
+        time_record_document = collection_TimeRecord.find_one()
         
+        if time_record_document:
+            time_record = time_record_document.get("time_record", "")
+
+            # 讀取與時間記錄相同時間的所有數據
+            matching_data = collection.find({"time": time_record})
+            
+            # 檢查是否有匹配的數據
+            if len(list(matching_data)) > 0:
+                # 對匹配的數據執行 distinct 操作
+                categories = matching_data.distinct("category")
+                if not categories:
+                    return jsonify([])
+                return jsonify(categories)
+
+        return jsonify()
+    
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        # date_start = request_data.get("date_start", "")
+        # date_end = request_data.get("date_end", "")
+
+        # 解析日期
+        try:
+            date_start, date_end = request_data["date_start"] + "-0000", request_data["date_end"] + "-2359"
+        except ValueError as e:
+            print("日期格式錯誤: ", e)
+            # 處理錯誤，例如返回一個錯誤響應
+            date_start = None
+            date_end = None
+        # print('date_start:', date_start, 'date_end:', date_end)
+
+        query = {
+            "time": {
+                "$gte": date_start,
+                "$lte": date_end
+            }
+        }
+
+        matching_data = collection.find(query)
+        # print('matching_data:', matching_data)
+
+        # matching_data = collection.find({"time": time_record})
+            
         # 檢查是否有匹配的數據
         if len(list(matching_data)) > 0:
             # 對匹配的數據執行 distinct 操作
             categories = matching_data.distinct("category")
+            # print('categories:', categories)
             if not categories:
                 return jsonify([])
             return jsonify(categories)
-
-    return jsonify()
+        # print('categories:', [])
+        return jsonify()
 
 @app.route('/tsmcserver/if_detect', methods=['GET', 'POST'])
 def if_detect():
@@ -381,7 +423,7 @@ def history_page_information():
         # 提取搜尋條件
         category = request_data.get("category", "")
         result = request_data.get("result", "")
-        time_record = collection_TimeRecord.find_one().get("time_record", "")
+        # time_record = collection_TimeRecord.find_one().get("time_record", "")
         current_page = request_data.get("currentPage", 1)
         pageSize = request_data.get("pageSize", 20)
         date_start = str(request_data.get("date_start", ""))
@@ -416,7 +458,7 @@ def history_page_information():
             search_criteria["result"] = result
 
         
-        print('search_criteria:', search_criteria)
+        # print('search_criteria:', search_criteria)
 
         data2 = list(collection.find(projection={"original_id": False}))
         # print("data2:" , data2)
@@ -428,9 +470,9 @@ def history_page_information():
             .skip(skip_count)
             .limit(pageSize)  # 限制回傳筆數
         )        
-        print("data:")
-        for item in data:
-            print(item)
+        # print("data:")
+        # for item in data:
+        #     print(item)
 
         if not data:
             # 如果集合為空，返回一個特定值或錯誤訊息
@@ -474,8 +516,14 @@ def history_page_information():
             data_item["visible_light"] = data_item.get("image", {}).get("visible_light", "")
             data_item["original_image"] = image_path
 
-        search_time_record = {"time": time_record}
-        data1 = list(collection.find(search_time_record, projection={"original_id": False}))
+        # search_time_record = {"time": time_record}
+        query = {
+            "time": {
+                "$gte": f"{start_mongodb_date}-0000",
+                "$lte": f"{end_mongodb_date}-2359"
+            }
+        }
+        data1 = list(collection.find(query, projection={"original_id": False}))
         # print("data1:", data1)
         
         # 統計特定 category 對應四種 result 的數量
@@ -530,10 +578,63 @@ def getTemperatureArray():
         # 回傳資料
         return jsonify({"overall_tmp": overall_tmp, "tmp": tmp, "normal_tmp": normal_tmp, "notice_tmp": notice_tmp, "abnormal_tmp": abnormal_tmp, "danger_tmp": danger_tmp}), 200
 
+@app.route('/tsmcserver/unmodified_page_info', methods=['POST'])
+def unmodified_page_info():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取搜尋條件
+        current_page = request_data.get("currentPage", 1)
+        if_mark = request_data.get("if_mark", False)
+        img_name_search = request_data.get("img_name_search", "")
+        time_record = collection_TimeRecord.find_one().get("time_record", "")
+        # print("current_page:", current_page, "if_mark:", if_mark, "img_name_search:", img_name_search, "time_record:", time_record)
+        # 計算要跳過的文件數
+        skip_count = (current_page - 1) * 18
+
+        # 根據 if_mark 設置過濾條件
+        if if_mark:
+            tsmc_data = collection.find({"correction_mark": "1", "time": time_record})
+            image_names = []
+            for data in tsmc_data:
+                # print(f"tsmc_data item: {data}")  # 打印每個找到的 tsmc_data 項
+                if "image" in data and "thermal" in data["image"]:
+                    image_names.append(data["image"]["thermal"])
+
+            results = col_ori_identification_result.find({
+                "image_path": {"$in": image_names},
+                "time": time_record
+            }).skip(skip_count).limit(18)
+            # print("results:", results)
+        else:
+            if img_name_search == "":
+                results = col_ori_identification_result.find({
+                    "time": time_record
+                }).skip(skip_count).limit(18)
+                # for result in results:
+                #     print("results:", result)
+            else:
+                results = col_ori_identification_result.find({
+                    "result_dataset.image": img_name_search,
+                    "time": time_record
+                }).skip(skip_count).limit(18)
+                # print("results:", results)
+
+        # 將結果轉換為list
+        result_list = list(results)
+        for result in result_list:
+            result['_id'] = str(result['_id'])  # 將ObjectId轉換為字串
+
+        response_data = {"data": result_list}
+
+        return jsonify(result_list), 200
+
+
 
 def create_indexes():
     # 為 'tsmccollection' 集合建立名字和狀態的索引
     collection.create_index([("name", 1), ("status", 1), ("time", 1)])
+    col_ori_identification_result.create_index([("name", 1), ("status", 1), ("time", 1)])
 
 
 if __name__ == '__main__':

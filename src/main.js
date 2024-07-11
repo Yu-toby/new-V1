@@ -10,7 +10,7 @@ import axios from "axios";
 import VueAxios from "vue-axios";
 axios.defaults.baseURL = "/api";
 
-import elementPlus from 'element-plus'
+import ElementPlus  from 'element-plus'
 import 'element-plus/dist/index.css'
 
 import naive from 'naive-ui'
@@ -24,5 +24,5 @@ app.use(router)
 app.use(naive)
 app.use(VueAxios, axios)
 app.config.globalProperties.$axios = axios
-app.use(elementPlus)
+app.use(ElementPlus )
 app.mount('#app')

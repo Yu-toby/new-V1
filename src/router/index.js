@@ -8,6 +8,7 @@ import Setting from '@/views/Setting.vue'
 import History from '@/views/History.vue'
 import Test from '@/views/Test.vue'
 import Layout from '@/layout/layout.vue'
+import ResultsCorrection from '@/views/ResultsCorrection.vue'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -30,6 +31,11 @@ const router = createRouter({
                     path: '',
                     name: 'Main',
                     component: Main
+                },
+                {
+                    path: '/resultsCorrection',
+                    name: 'ResultsCorrection',
+                    component: ResultsCorrection
                 },
                 {
                     path: '/resultsShow',

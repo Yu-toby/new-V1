@@ -144,9 +144,22 @@ export default {
             currentPage: 1,
         }
     },
+    watch: {
+        // formattedRange: function (val) {
+        //     this.getCategories();
+        // },
+        range: {
+            handler(val) {
+                this.date_start = this.formatDate(val[0]);
+                this.date_end = this.formatDate(val[1]);
+                this.getCategories();
+            },
+            immediate: true
+        }
+    },
     mounted() {
         //獲取時間紀錄
-        this.GetTimeRecord();
+        // this.GetTimeRecord();
         // 在 mounted 中加入獲取 MongoDB 類別選項的程式碼
         this.getCategories();
         //更四種新狀態數字
@@ -179,22 +192,24 @@ export default {
         show(index) {
             ;(this.showIndex = index), (this.showModal = true)
         },
-        //讀取時間紀錄
-        GetTimeRecord() {
-            this.axios.get('/tsmcserver/time_record').then((res) => {
-                this.uploadTime = res.data
-            })
-        },
         // 獲取 MongoDB 中的類別選項
         getCategories() {
-            this.axios.get('/tsmcserver/categories').then((res) => {
-                const all_categories = res.data
-                all_categories.unshift('全部')
-                this.categories = all_categories
-                this.UpdatePageInformation()
-                // console.log(this.categories)
-            })
-            
+            this.axios.post('/tsmcserver/categories', {
+                date_start: this.date_start,
+                date_end: this.date_end
+            }).then((res) => {
+                let all_categories = res.data;
+                if (all_categories && all_categories.length > 0) {
+                    all_categories.unshift('全部');
+                } else {
+                    all_categories = [];
+                }
+                this.categories = all_categories;
+                console.log(this.categories);
+            }).catch((error) => {
+                console.error('Error fetching categories:', error);
+                this.categories = []; // 错误处理，设置为空数组
+            });
         },
         handlePageSizeChange(newPageSize) {
             this.pageSize = newPageSize;
@@ -212,10 +227,10 @@ export default {
             }).then(response => {
                 // console.log(response.data);
                 const { data, category_count } = response.data;     //解構數值
-                
+                // console.log('category_count:', category_count);
 
                 this.details = data;
-                // console.log(this.details);
+                // console.log(Object.keys(this.details).length);
                 this.totalPage = Math.ceil((category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"]) / this.pageSize);
 
                 // this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);

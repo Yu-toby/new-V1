@@ -10,6 +10,7 @@
             <router-link to="/settings" >設定</router-link>
             <router-link to="/history">歷史查詢</router-link>            
             <!-- <router-link to="/resultsShow" >辨識結果</router-link> -->
+            <router-link to="/resultsCorrection" >辨識結果修正</router-link>
             <router-link to="/" >首頁</router-link>
         </div>
     </header>
@@ -25,14 +26,15 @@ export default {}
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.8);
+    /* background-color: #0b2945; */
+    background-color: rgb(70, 70, 70);
     height: 55px;
     padding: 0px;
 }
 /*----------------------------------------------------------------------------------*/
 .header-logo {    
     display: flex;
-    color: rgba(0, 0, 0, 0.8);
+    color: #0b2945;
     align-items: center;
     padding: 0px;    
 }
@@ -58,6 +60,7 @@ export default {}
 
 .options a:hover {
     background-color: #ffffff;
+    font-weight: bold;
     color: rgba(0, 0, 0, 0.8);
 }
 </style>
