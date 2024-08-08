@@ -2,6 +2,7 @@
 import SmallPicture from '@/components/results/small-picture.vue'
 import Detail from '@/components/results/detail.vue'
 import * as XLSX from 'xlsx'
+// import { tr } from 'element-plus/es/locale';
 </script>
 
 <template>
@@ -48,48 +49,64 @@ import * as XLSX from 'xlsx'
                 <button type="button" class="btn btn-secondary" @click="exportExcel">匯出報告</button>
             </div>
             <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-            <div
-                ref="liveToast"
-                class="toast align-items-center text-light bg-dark border-0"
-                role="alert"
-                aria-live="assertive"
-                aria-atomic="true"
-            >
-                <div class="d-flex">
-                    <div class="toast-body">辨識完成</div>
-                    <button
-                        type="button"
-                        class="btn-close btn-close-white me-2 m-auto"
-                        data-bs-dismiss="toast"
-                        aria-label="Close"
-                    ></button>
+                <div
+                    ref="liveToast"
+                    class="toast align-items-center text-light bg-dark border-0"
+                    role="alert"
+                    aria-live="assertive"
+                    aria-atomic="true"
+                >
+                    <div class="d-flex">
+                        <div class="toast-body">辨識完成</div>
+                        <button
+                            type="button"
+                            class="btn-close btn-close-white me-2 m-auto"
+                            data-bs-dismiss="toast"
+                            aria-label="Close"
+                        ></button>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
 
         <div class="content">
             <div>
                 <ul class="nav nav-tabs nav-justified">
-                    <li class="nav-item" id="normal" @click="selectedTab = '正常'; UpdatePageInformation()">
+                    <li
+                        class="nav-item"
+                        id="normal"
+                        @click="selectedTab = '正常'; UpdatePageInformation()"
+                    >
                         <a class="nav-link" href="#">
                             正常
                             <span>{{ normal_Number }}</span>
                         </a>
                     </li>
-                    <li class="nav-item" id="notice" @click="selectedTab = '注意'; UpdatePageInformation()">
+                    <li
+                        class="nav-item"
+                        id="notice"
+                        @click="selectedTab = '注意'; UpdatePageInformation()"
+                    >
                         <a class="nav-link" href="#">
                             注意
                             <span>{{ notice_Number }}</span>
                         </a>
                     </li>
-                    <li class="nav-item" id="abnormal" @click="selectedTab = '異常'; UpdatePageInformation()">
+                    <li
+                        class="nav-item"
+                        id="abnormal"
+                        @click="selectedTab = '異常'; UpdatePageInformation()"
+                    >
                         <a class="nav-link" href="#">
                             異常
                             <span>{{ abnormal_Number }}</span>
                         </a>
                     </li>
-                    <li class="nav-item" id="danger" @click="selectedTab = '危險'; UpdatePageInformation()">
+                    <li
+                        class="nav-item"
+                        id="danger"
+                        @click="selectedTab = '危險'; UpdatePageInformation()"
+                    >
                         <a class="nav-link" href="#">
                             危險
                             <span>{{ danger_Number }}</span>
@@ -115,7 +132,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
-                    <div class="img_outside_container" v-else></div>  
+                    <div class="img_outside_container" v-else></div>
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -144,7 +161,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
-                    <div class="img_outside_container" v-else></div>  
+                    <div class="img_outside_container" v-else></div>
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -173,7 +190,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
-                    <div class="img_outside_container" v-else></div>  
+                    <div class="img_outside_container" v-else></div>
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -202,7 +219,7 @@ import * as XLSX from 'xlsx'
                             ></SmallPicture>
                         </div>
                     </div>
-                    <div class="img_outside_container" v-else></div>  
+                    <div class="img_outside_container" v-else></div>
                     <div class="page">
                         <div class="example-pagination-block">
                             <el-pagination
@@ -224,7 +241,8 @@ import * as XLSX from 'xlsx'
                         :describe="details[showIndex]"
                         v-show="showModal"
                         @close="showModal = false"
-                        @change="changeImage"
+                        @change1="changeImage"
+                        @check_error_change="UpdatePageInformation"
                     ></Detail>
                 </div>
                 <div v-else></div>
@@ -253,6 +271,7 @@ export default {
             categories: [], // 新增用來存放 MongoDB 中的類別選項
 
             loading: 0,
+            check_if_detect: false,
             uploadTime: '',
 
             nor_totalPages: 10,
@@ -265,10 +284,10 @@ export default {
             dan_currentPage: 1,
 
             images: [],
-            currentImageIndex: 0,
+            currentImageIndex: 0
         }
     },
-    mounted() {
+    mounted() {  // 進入這個.vue時要做的事
         //獲取時間紀錄
         this.GetTimeRecord()
 
@@ -288,9 +307,8 @@ export default {
         //更新頁面資訊
         // this.UpdatePageInformation()
     },
-    beforeUnmount() {
-        //API
-        clearInterval(this.intervalId)
+    beforeUnmount() {   // 離開這個.vue時要做的事
+        this.stopCheckingIfDetect()
     },
     methods: {
         show(index) {
@@ -400,11 +418,21 @@ export default {
         // 向後端發送請求來獲取 if_detect 狀態
         checkIfDetect() {
             this.axios.get('/tsmcserver/if_detect').then((res) => {
-                console.log(res.data)
+                console.log('loading', res.data)
                 this.loading = res.data
-                if (res.data === 0) {
-                    this.stopCheckingIfDetect()
+                if (res.data === 1) {
+                    this.check_if_detect = true
                 }
+                if ((res.data === 0) && this.check_if_detect) {
+                    this.check_if_detect = false
+                    this.getCategories()
+                    this.GetTimeRecord()
+                    this.updateStatusNumber()
+                    this.UpdatePageInformation()
+                }
+                // if (res.data === 0) {
+                //     this.stopCheckingIfDetect()
+                // }
                 // if (res.data.status === 'success') {
                 //     this.ifDetectStatus = res.data.new_number;
                 //     // 如果 if_detect 變成 0，則停止定時檢查
@@ -459,19 +487,23 @@ export default {
         //更新狀態數字
         updateStatusNumber() {
             if (this.selectedOption !== '') {
-                this.axios.post('/tsmcserver/status_number',{category: this.selectedOption === '全部' ? '全部' : this.selectedOption})
-                .then((res) => {
-                    console.log(res.data);
-                    this.normal_Number = res.data[this.selectedOption]["正常"];
-                    this.notice_Number = res.data[this.selectedOption]["注意"];
-                    this.abnormal_Number = res.data[this.selectedOption]["異常"];
-                    this.danger_Number = res.data[this.selectedOption]["危險"];
-                }).catch((error) => {
-                    console.log(error);
-                });
+                this.axios
+                    .post('/tsmcserver/status_number', {
+                        category: this.selectedOption === '全部' ? '全部' : this.selectedOption
+                    })
+                    .then((res) => {
+                        console.log(res.data)
+                        this.normal_Number = res.data[this.selectedOption]['正常']
+                        this.notice_Number = res.data[this.selectedOption]['注意']
+                        this.abnormal_Number = res.data[this.selectedOption]['異常']
+                        this.danger_Number = res.data[this.selectedOption]['危險']
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                    })
             } else {
-                console.log("category is empty");
-                return;
+                console.log('category is empty')
+                return
             }
         },
         // 獲取 MongoDB 中的類別選項
@@ -482,7 +514,6 @@ export default {
                 this.categories = all_categories
                 this.UpdatePageInformation()
             })
-            
         },
         // 監聽頁碼變化事件
         nor_handlePageChange(newPage) {
@@ -515,38 +546,46 @@ export default {
         },
         UpdatePageInformation() {
             // 在這裡可以發起 API 請求，獲取新頁碼對應的數據
-            this.axios.post('/tsmcserver/page_information', {
-                result: this.selectedTab,
-                category: this.selectedOption === '全部' ? '全部' : this.selectedOption,
-                nor_currentPage: this.nor_currentPage,
-                not_currentPage: this.not_currentPage,
-                abn_currentPage: this.abn_currentPage,
-                dan_currentPage: this.dan_currentPage
-            }).then(response => {
-                console.log("response:",response.data);
-                const { data, category_count } = response.data;     //解構數值
-                
+            console.log('select', this.selectedOption)
+            this.axios
+                .post('/tsmcserver/page_information', {
+                    result: this.selectedTab,
+                    category: this.selectedOption === '全部' ? '全部' : this.selectedOption,
+                    nor_currentPage: this.nor_currentPage,
+                    not_currentPage: this.not_currentPage,
+                    abn_currentPage: this.abn_currentPage,
+                    dan_currentPage: this.dan_currentPage
+                })
+                .then((response) => {
+                    console.log('response:', response.data)
+                    const { data, category_count } = response.data //解構數值
 
-                this.details = data;
-                console.log("details:",this.details)
-                // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
+                    this.details = data
+                    // console.log('details:', this.details)
+                    // this.category_total_number = category_count[this.selectedOption]["正常"] + category_count[this.selectedOption]["注意"] + category_count[this.selectedOption]["異常"] + category_count[this.selectedOption]["危險"];
 
-                this.nor_totalPages = 10*Math.ceil(category_count[this.selectedOption]["正常"] / 18);
-                this.not_totalPages = 10*Math.ceil(category_count[this.selectedOption]["注意"] / 18);
-                this.abn_totalPages = 10*Math.ceil(category_count[this.selectedOption]["異常"] / 18);
-                this.dan_totalPages = 10*Math.ceil(category_count[this.selectedOption]["危險"] / 18);
-            }).catch(error => {
-                console.log(error);
-            });
+                    this.nor_totalPages =
+                        10 * Math.ceil(category_count[this.selectedOption]['正常'] / 18)
+                    this.not_totalPages =
+                        10 * Math.ceil(category_count[this.selectedOption]['注意'] / 18)
+                    this.abn_totalPages =
+                        10 * Math.ceil(category_count[this.selectedOption]['異常'] / 18)
+                    this.dan_totalPages =
+                        10 * Math.ceil(category_count[this.selectedOption]['危險'] / 18)
+                })
+                .catch((error) => {
+                    console.log(error)
+                })
         },
         showToast() {
             // 這裡初始化並顯示 Bootstrap Toast
             new bootstrap.Toast(this.$refs.liveToast).show()
         },
         changeImage() {
+            console.log('ChangeImage')
             // 在兩張圖片之間切換
-            this.currentImageIndex = 1 - this.currentImageIndex;
-        },
+            this.currentImageIndex = 1 - this.currentImageIndex
+        }
     },
     computed: {
         currentImage() {
@@ -554,7 +593,7 @@ export default {
                 this.details[this.showIndex].thermal,
                 this.details[this.showIndex].visible_light
             ]
-            return this.images[this.currentImageIndex];
+            return this.images[this.currentImageIndex]
         }
     }
 }

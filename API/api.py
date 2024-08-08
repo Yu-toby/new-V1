@@ -47,6 +47,11 @@ collection1 = db['if_detect']
 collection_TimeRecord = db['time_record']
 collection_temperature = db['temperature_threshold']
 col_ori_identification_result = db['original_identification_result']
+revise_collection = db['revise']
+trained_collection = db['trained']
+temp_collection = db['temperature_threshold']
+col_if_retrain = db['if_retrain']
+col_model_version = db['model_version']
 
 # 確保上傳目錄存在
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -315,7 +320,7 @@ def page_information():
 
         # 查詢並回傳結果
         data = list(
-            collection.find(search_criteria, projection={"_id": False, "original_id": False})
+            collection.find(search_criteria, projection={"original_id": False})
             .sort([("name", 1)])  # 依照 name 欄位升冪排序
             .skip(skip_count)
             .limit(18)  # 限制回傳筆數
@@ -356,6 +361,7 @@ def page_information():
             original_image.save(image_buffer, format='JPEG')
             image_base64 = base64.b64encode(image_buffer.getvalue()).decode()
 
+            data_item["_id"] = str(data_item["_id"])
             data_item["time"] = data_item.get("time", "")
             data_item["category"] = data_item.get("category", "")
             data_item["max"] = round(float(data_item.get("temp", {}).get("max", 0)), 1)
@@ -365,6 +371,7 @@ def page_information():
             data_item["thermal"] = f"data:image/jpeg;base64,{image_base64}"
             data_item["visible_light"] = data_item.get("image", {}).get("visible_light", "")
             data_item["original_image"] = image_path
+            data_item["correction_mark"] = data_item.get("correction_mark", "")
 
         search_time_record = {"time": time_record}
         data1 = list(collection.find(search_time_record, projection={"original_id": False}))
@@ -578,6 +585,35 @@ def getTemperatureArray():
         # 回傳資料
         return jsonify({"overall_tmp": overall_tmp, "tmp": tmp, "normal_tmp": normal_tmp, "notice_tmp": notice_tmp, "abnormal_tmp": abnormal_tmp, "danger_tmp": danger_tmp}), 200
 
+@app.route('/tsmcserver/identification_error', methods=['POST'])
+def identification_error():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取要更新的 _id、資訊
+        record_id = request_data.get("_id", "")
+        correction_mark = request_data.get("correction_mark", "")
+
+        if not record_id:
+            return jsonify({"status": "error", "message": "_id is required"}), 400
+
+        # 將 _id 轉換為 ObjectId 類型
+        from bson.objectid import ObjectId
+        try:
+            object_id = ObjectId(record_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+        
+        update_result = collection.update_one(
+            {"_id": object_id},
+            {"$set": {"correction_mark": correction_mark}}
+        )
+
+        if update_result.modified_count == 1:
+            return jsonify({"status": "success"})
+
+# 修正辨識結果========================================================================================================
+# 未修改頁面-----------------
 @app.route('/tsmcserver/unmodified_page_info', methods=['POST'])
 def unmodified_page_info():
     if request.method == 'POST':
@@ -588,46 +624,501 @@ def unmodified_page_info():
         if_mark = request_data.get("if_mark", False)
         img_name_search = request_data.get("img_name_search", "")
         time_record = collection_TimeRecord.find_one().get("time_record", "")
-        # print("current_page:", current_page, "if_mark:", if_mark, "img_name_search:", img_name_search, "time_record:", time_record)
+
         # 計算要跳過的文件數
         skip_count = (current_page - 1) * 18
 
         # 根據 if_mark 設置過濾條件
         if if_mark:
-            tsmc_data = collection.find({"correction_mark": "1", "time": time_record})
-            image_names = []
-            for data in tsmc_data:
-                # print(f"tsmc_data item: {data}")  # 打印每個找到的 tsmc_data 項
-                if "image" in data and "thermal" in data["image"]:
-                    image_names.append(data["image"]["thermal"])
+            tsmc_data = collection.find({"correction_mark": True, "time": time_record})
+            image_names = [data["image"]["thermal"] for data in tsmc_data if "image" in data and "thermal" in data["image"]]
 
-            results = col_ori_identification_result.find({
+            query = {
                 "image_path": {"$in": image_names},
-                "time": time_record
-            }).skip(skip_count).limit(18)
-            # print("results:", results)
+                "time": time_record,
+                "if_revise": False
+            }
         else:
             if img_name_search == "":
-                results = col_ori_identification_result.find({
-                    "time": time_record
-                }).skip(skip_count).limit(18)
-                # for result in results:
-                #     print("results:", result)
+                query = {
+                    "time": time_record,
+                    "if_revise": False
+                }
             else:
-                results = col_ori_identification_result.find({
-                    "result_dataset.image": img_name_search,
-                    "time": time_record
-                }).skip(skip_count).limit(18)
-                # print("results:", results)
+                query = {
+                    "image_path": {"$regex": img_name_search, "$options": "i"},
+                    "time": time_record,
+                    "if_revise": False
+                }
+
+        # 查詢結果和總數量
+        results = col_ori_identification_result.find(query).skip(skip_count).limit(18)
+        total_count = col_ori_identification_result.count_documents(query)
 
         # 將結果轉換為list
         result_list = list(results)
         for result in result_list:
             result['_id'] = str(result['_id'])  # 將ObjectId轉換為字串
 
-        response_data = {"data": result_list}
+        response_data = {
+            "data": result_list,
+            "total_count": total_count
+        }
 
-        return jsonify(result_list), 200
+        return jsonify(response_data), 200
+
+@app.route('/tsmcserver/reviseResult', methods=['POST'])
+def reviseResult():
+    if request.method == 'POST':
+        # 檢查 "revise" 集合是否存在
+        if "revise" not in db.list_collection_names():
+            # 如果不存在，創建 "revise" 集合
+            db.create_collection("revise")
+
+        request_data = request.get_json()
+        # print("request_data:", request_data)
+
+        # 更新original_identification_result裡面的if_revise為true
+        record_id = request_data.get("original_id", "")
+        if not record_id:
+            return jsonify({"status": "error", "message": "original_id is required"}), 400
+        
+        from bson.objectid import ObjectId
+        try:
+            object_id = ObjectId(record_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+        
+        result = col_ori_identification_result.update_one(
+            {"_id": object_id},
+            {"$set": {"if_revise": True}}
+        )
+
+        # 插入數據到revise集合
+        result = revise_collection.insert_one({
+            "time": dt.datetime.today().strftime('%Y%m%d-%H%M'),
+            "original_id": request_data.get("original_id", ""),
+            "image_path": request_data.get("image", ""),
+            "result_dataset": request_data.get("result_dataset", ""),
+            "if_train": False
+        })
+
+        if result.inserted_id:
+            return jsonify({"status": "success"})
+        else:
+            return jsonify({"status": "error"})
+
+# 已修改頁面-----------------
+@app.route('/tsmcserver/already_edited_page_info', methods=['POST'])
+def already_edited_page_info():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取搜尋條件
+        current_page = request_data.get("currentPage", 1)
+        img_name_search = request_data.get("img_name_search", "")
+        time_record = collection_TimeRecord.find_one().get("time_record", "")
+
+        # 計算要跳過的文件數
+        skip_count = (current_page - 1) * 18
+
+        # 設置查詢條件
+        if img_name_search == "":
+            query = {
+                "if_train": False
+            }
+        else:
+            query = {
+                "image_path": {"$regex": img_name_search, "$options": "i"},
+                "if_train": False
+            }
+
+        # 查詢結果和總數量
+        results = revise_collection.find(query).skip(skip_count).limit(18)
+        total_count = revise_collection.count_documents(query)
+
+        # 將結果轉換為list
+        result_list = list(results)
+        for result in result_list:
+            result['_id'] = str(result['_id'])  # 將ObjectId轉換為字串
+
+        response_data = {
+            "data": result_list,
+            "total_count": total_count
+        }
+
+        return jsonify(response_data), 200
+    
+@app.route('/tsmcserver/updateResult', methods=['POST'])
+def updateResult():
+    if request.method == 'POST':
+        # 檢查 "revise" 集合是否存在
+        if "revise" not in db.list_collection_names():
+            # 如果不存在，創建 "revise" 集合
+            db.create_collection("revise")
+
+        request_data = request.get_json()
+        # print("request_data:", request_data)
+
+        # 提取要更新的 _id
+        record_id = request_data.get("_id", "")
+        if not record_id:
+            return jsonify({"status": "error", "message": "_id is required"}), 400
+
+        # 將 _id 轉換為 ObjectId 類型
+        from bson.objectid import ObjectId
+        try:
+            object_id = ObjectId(record_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        # 構建更新數據
+        update_data = {
+            "time": dt.datetime.today().strftime('%Y%m%d-%H%M'),
+            "result_dataset": request_data.get("result_dataset", ""),
+        }
+
+        # 更新數據
+        result = revise_collection.update_one(
+            {"_id": object_id},
+            {"$set": update_data}
+        )
+
+        if result.modified_count > 0:
+            return jsonify({"status": "success"})
+        else:
+            return jsonify({"status": "error", "message": "No record updated"}), 404
+
+@app.route('/tsmcserver/deleteResult', methods=['POST'])
+def deleteResult():
+    if request.method == 'POST':
+        request_data = request.get_json()
+        # print("request_data:", request_data)
+
+        # 刪除revise集合中的指定數據
+        # 更新original_identification_result裡面的if_revise為false
+        record_id = request_data.get("_id", "")
+        original_id = request_data.get("original_id", "")
+
+        if not record_id:
+            return jsonify({"status": "error", "message": "_id is required"}), 400
+        elif not original_id:
+            return jsonify({"status": "error", "message": "original_id is required"}), 400
+
+        # 將 _id 和 original_id 轉換為 ObjectId 類型
+        from bson.objectid import ObjectId
+        try:
+            record_object_id = ObjectId(record_id)
+            original_object_id = ObjectId(original_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        # 刪除 revise 集合中的指定數據
+        delete_result = revise_collection.delete_one({"_id": record_object_id})
+        
+        # 更新 original_identification_result 集合中的 if_revise 為 false
+        update_result = col_ori_identification_result.update_one(
+            {"_id": original_object_id},
+            {"$set": {"if_revise": False}}
+        )
+
+        # 判斷刪除操作是否成功
+        if delete_result.deleted_count == 0:
+            return jsonify({"status": "error", "message": "No record deleted"}), 404
+
+        # 判斷更新操作是否成功
+        if update_result.modified_count == 0:
+            return jsonify({"status": "error", "message": "Update failed"}), 500
+
+        return jsonify({"status": "success"}), 200
+
+@app.route('/tsmcserver/retrain', methods=['POST'])
+def retrain():
+    if request.method == 'POST':
+
+        # 檢查 revise_collection 是否有資料
+        documents = list(revise_collection.find({}))
+        if not documents:
+            return jsonify({"status": "error", "message": "No documents to transfer"}), 200
+
+        # 檢查 "if_retrain" 集合是否存在
+        if "if_retrain" not in db.list_collection_names():
+            # 如果不存在，創建 "if_retrain" 集合，並插入一個初始文檔，"number" 設置為 0
+            db.create_collection("if_retrain")
+            db.if_retrain.insert_one({"number": 0})
+
+        # 檢索當前 "number" 值
+        current_document = db.if_retrain.find_one()
+        if not current_document:
+            return jsonify({"status": "error", "message": "No if_retrain document found"}), 404
+        
+        current_number = current_document.get("number", 0)
+        # 切換 "number" 字段的值
+        new_number = 1 if current_number == 0 else 1
+        # 更新 "number" 字段的值
+        db.if_retrain.update_one({}, {"$set": {"number": new_number}})
+
+        # return jsonify({"status": "success", "new_number": new_number})
+
+        # 更新每個文檔的 if_train 標籤為 true
+        for document in documents:
+            document['if_train'] = True
+
+        # 將文檔插入 trained_collection
+        insert_result = trained_collection.insert_many(documents)
+        if len(insert_result.inserted_ids) != len(documents):
+            return jsonify({"status": "error", "message": "Some documents were not inserted"}), 500
+
+        # TODO: 是否要將數據刪除或保留
+
+        # 刪除 revise_collection 中的所有文檔
+        delete_result = revise_collection.delete_many({})
+        if delete_result.deleted_count != len(documents):
+            return jsonify({"status": "error", "message": "Some documents were not deleted"}), 500
+
+        # # 保留 revise_collection 中的所有文檔
+        # # 更新所有if_train為false的文檔為true
+        # result = revise_collection.update_many(
+        #     {"if_train": False},
+        #     {"$set": {"if_train": True}}
+        # )
+        # if result.modified_count > 0:
+        #     return jsonify({"status": "success", "updated_count": result.modified_count}), 200
+        # else:
+        #     return jsonify({"status": "error", "message": "No documents were updated"}), 404
+
+        return jsonify({"status": "success", "message": "success", "transferred_count": len(documents), "if_train": new_number}), 200
+
+# 已訓練頁面-----------------
+@app.route('/tsmcserver/already_train_page_info', methods=['POST'])
+def already_train_page_info():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取搜尋條件
+        current_page = request_data.get("currentPage", 1)
+        img_name_search = request_data.get("img_name_search", "")
+        time_record = collection_TimeRecord.find_one().get("time_record", "")
+
+        # 計算要跳過的文件數
+        skip_count = (current_page - 1) * 18
+
+        # 設置查詢條件
+        if img_name_search == "":
+            query = {}
+        else:
+            query = {
+                "image_path": {"$regex": img_name_search, "$options": "i"}
+            }
+
+        # 查詢結果和總數量
+        results = trained_collection.find(query).skip(skip_count).limit(18)
+        total_count = trained_collection.count_documents(query)
+
+        # 將結果轉換為list
+        result_list = list(results)
+        for result in result_list:
+            result['_id'] = str(result['_id'])  # 將ObjectId轉換為字串
+
+        response_data = {
+            "data": result_list,
+            "total_count": total_count
+        }
+
+        return jsonify(response_data), 200
+
+
+@app.route('/tsmcserver/if_training', methods=['GET'])
+def if_training():
+    if request.method == 'GET':
+        # 檢索當前 "number" 值
+        current_document = db.if_retrain.find_one()
+        if current_document:
+            current_number = current_document.get("number", 0)
+            return jsonify({"status": "success", "if_train": current_number})
+        else:
+            return jsonify({"status": "error"})
+
+# 設定頁面========================================================================================================
+# 溫度設定頁面-----------------
+@app.route('/tsmcserver/temperature_page_info', methods=['POST'])
+def temperature_page_info():
+    if request.method == 'POST':
+        # 查詢 temperature_threshold 集合中的所有文檔
+        documents = list(temp_collection.find({}))
+
+        if not documents:
+            return jsonify({"status": "error", "message": "No documents found"}), 404
+
+        # 重新整理資料
+        result = []
+        for document in documents:
+            transformed_data = {
+                "lowest_temperature": document.get("normal_tmp", [])[0],
+                "temperature": [
+                    document.get("normal_tmp", [])[1],
+                    document.get("notice_tmp", [])[1],
+                    document.get("abnormal_tmp", [])[1],
+                    document.get("danger_tmp", [])[1]
+                ],
+                "device_type": document.get("name"),
+                "_id": str(document.get("_id"))
+            }
+            result.append(transformed_data)
+
+        return jsonify({"status": "success", "data": result}), 200
+        
+@app.route('/tsmcserver/update_temperature_data', methods=['POST'])
+def update_temperature_data():
+    if request.method == 'POST':
+        request_data = request.get_json()
+        print("request_data:", request_data)
+
+        # 提取要更新的 _id
+        record_id = request_data.get("_id", "")
+        if not record_id:
+            return jsonify({"status": "error", "message": "_id is required"}), 400
+
+        # 將 _id 轉換為 ObjectId 類型
+        try:
+            object_id = ObjectId(record_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        # 構建更新數據
+        lowest_temperature = request_data.get("lowest_temperature", 0)
+        temperature_list = request_data.get("temperature", [])
+        if len(temperature_list) != 4:
+            return jsonify({"status": "error", "message": "temperature list must contain 4 elements"}), 400
+
+        update_data = {
+            "normal_tmp": [lowest_temperature, temperature_list[0]],
+            "notice_tmp": [temperature_list[0], temperature_list[1]],
+            "abnormal_tmp": [temperature_list[1], temperature_list[2]],
+            "danger_tmp": [temperature_list[2], temperature_list[3]],
+            "overall_tmp":temperature_list[3]
+        }
+
+        # 更新數據
+        result = temp_collection.update_one(
+            {"_id": object_id},
+            {"$set": update_data}
+        )
+
+        if result.modified_count > 0:
+            return jsonify({"status": "success"}), 200
+        else:
+            return jsonify({"status": "error", "message": "No record updated"}), 404
+
+@app.route('/tsmcserver/delete_temperature_data', methods=['POST'])
+def delete_temperature_data():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取要刪除的 _id
+        record_id = request_data.get("_id", "")
+        if not record_id:
+            return jsonify({"status": "error", "message": "_id is required"}), 400
+
+        # 將 _id 轉換為 ObjectId 類型
+        try:
+            object_id = ObjectId(record_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        # 刪除數據
+        result = temp_collection.delete_one({"_id": object_id})
+
+        if result.deleted_count > 0:
+            return jsonify({"status": "success"}), 200
+        else:
+            return jsonify({"status": "error", "message": "No record deleted"}), 404
+
+# 模型板本設定頁面-----------------
+@app.route('/tsmcserver/version_setting_page_info', methods=['POST'])
+def version_setting_page_info():
+    if request.method == 'POST':
+        # 查詢 model_version 集合中的所有文檔
+        documents = list(col_model_version.find({}))
+
+        if not documents:
+            return jsonify({"status": "error", "message": "No documents found"}), 404
+
+        # 重新整理資料
+        result = []
+        for document in documents:
+            transformed_data = {
+                "_id": str(document.get("_id")),
+                "model": document.get("model"),
+                "version": document.get("version"),
+                "P": document.get("P"),
+                "R": document.get("R"),
+                "mAP50": document.get("mAP50"),
+                "using": document.get("using")
+            }
+            result.append(transformed_data)
+
+        return jsonify({"status": "success", "data": result}), 200
+
+@app.route('/tsmcserver/select_model_version', methods=['POST'])
+def select_model_version():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取要更新的 _id
+        record_id = request_data.get("_id", "")
+        if not record_id:
+            return jsonify({"status": "error", "message": "_id is required"}), 400
+
+        # 將 _id 轉換為 ObjectId 類型
+        try:
+            object_id = ObjectId(record_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        # 將所有data的using設為false
+        col_model_version.update_many({},{"$set": {"using": False}})
+
+        # 構建更新數據
+        update_data = {
+            "using": True
+        }
+
+        # 更新數據
+        result = col_model_version.update_one(
+            {"_id": object_id},
+            {"$set": update_data}
+        )
+
+        if result.modified_count > 0:
+            return jsonify({"status": "success"}), 200
+        else:
+            return jsonify({"status": "error", "message": "No record updated"}), 404
+
+
+@app.route('/tsmcserver/delete_model_version', methods=['POST'])
+def delete_model_version():
+    if request.method == 'POST':
+        request_data = request.get_json()
+
+        # 提取要刪除的 _id
+        record_id = request_data.get("_id", "")
+        if not record_id:
+            return jsonify({"status": "error", "message": "_id is required"}), 400
+
+        # 將 _id 轉換為 ObjectId 類型
+        try:
+            object_id = ObjectId(record_id)
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+        # 刪除數據
+        result = col_model_version.delete_one({"_id": object_id})
+
+        if result.deleted_count > 0:
+            return jsonify({"status": "success"}), 200
+        else:
+            return jsonify({"status": "error", "message": "No record deleted"}), 404
 
 
 

@@ -2,10 +2,11 @@
     <header class="navbar">
         <div class="header-logo">
             <img id="tsmc-logo" src="@/assets/picture/台積logo.png" />
-            <a id="title-words">台積電熱影像辨識網頁</a>
+            <a id="title-words">熱影像辨識</a>
         </div>
         <div class="options">
             <!-- <router-link to="/logout" ></router-link> -->
+            <router-link to="/test2" >測試頁面2</router-link>
             <router-link to="/test" >測試頁面</router-link>
             <router-link to="/settings" >設定</router-link>
             <router-link to="/history">歷史查詢</router-link>            
@@ -53,9 +54,10 @@ export default {}
     font-weight: bold;
     float: right;
     color: rgb(255, 255, 255);
-    padding: 5px 15px;
+    padding: 3px 10px;
     border-radius: 500px;
     text-decoration: none;
+    margin: 0px 5px;
 }
 
 .options a:hover {

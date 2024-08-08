@@ -9,6 +9,7 @@ import History from '@/views/History.vue'
 import Test from '@/views/Test.vue'
 import Layout from '@/layout/layout.vue'
 import ResultsCorrection from '@/views/ResultsCorrection.vue'
+import Test2 from '@/views/Test2.vue'
 
 const router = createRouter({
     history: createWebHistory(),
@@ -56,6 +57,11 @@ const router = createRouter({
                     path: '/test',
                     name: 'Test',
                     component: Test
+                },
+                {
+                    path: '/test2',
+                    name: 'Test2',
+                    component: Test2
                 }
             ]
         }

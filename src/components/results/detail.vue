@@ -1,14 +1,27 @@
 <script setup>
-import OverallTemplateBar from './overall-template-bar.vue';
-import IntervalTemplateBar from './interval-template-bar.vue';
+import OverallTemplateBar from './overall-template-bar.vue'
+import IntervalTemplateBar from './interval-template-bar.vue'
 </script>
 
 <template lang="">
     <div id="modal0">
         <div class="modal-content0">
             <div id="category-title">
+                <div id="error_check">
+                    <el-checkbox v-model="identification_error" label="辨識錯誤" @change="check_error"/>
+                    <!-- <el-switch
+                        v-model="identification_error"
+                        inline-prompt
+                        active-text="是"
+                        inactive-text="否"
+                        @change="check_error"
+                    /> -->
+                </div>
                 <p id="category-text">辨識類別：{{ describe?.category}}</p>
-                <div id="closeButton"><button type="button" class="btn-close" aria-label="Close" @click="closeModal"></button></div>
+                <div id="closeButton">
+                    <div/>
+                    <button type="button" class="btn-close" aria-label="Close" @click="closeModal"/>
+                </div>
             </div>
             <div id="details_con" :style="{ backgroundColor: bcolor }">
                 <OverallTemplateBar
@@ -33,7 +46,7 @@ import IntervalTemplateBar from './interval-template-bar.vue';
                         </tr>
                     </table>
                     <div class="change_image_btn">
-                        <button type="button" class="btn btn-secondary" @click="changeImage">熱影像 / 可見光</button>
+                        <button type="button" class="btn btn-secondary" @click="ChangeImage">熱影像 / 可見光</button>
                     </div>
                     <img :src="src" id="detail-picture"  :style="{ borderColor: tbcolor }">
                 </div>                
@@ -53,11 +66,11 @@ import IntervalTemplateBar from './interval-template-bar.vue';
 </template>
 <script>
 export default {
-    props:{    
+    props: {
         src: {
             type: String,
             required: ''
-        },    
+        },
         describe: {
             type: Object,
             default: () => ({})
@@ -69,17 +82,22 @@ export default {
         tbcolor: {
             type: String,
             default: ''
-        }
+        },
+        // error_check: {
+        //     type: Boolean,
+        //     default: false
+        // }
     },
-    emit: [
-        "close"
-    ],
+    emit: ['close'],
     watch: {
-        describe: {     // 監聽describe的變化
-            handler() { // 當describe有變化時，執行以下function
+        describe: {
+            // 監聽describe的變化
+            handler() {
+                // 當describe有變化時，執行以下function
                 this.GetTemperatureArray();
+                this.identification_error = this.describe?.correction_mark;
             },
-            deep: true  
+            deep: true
         }
     },
     data() {
@@ -92,50 +110,69 @@ export default {
             interval_barHeight: 0,
             nor_height: [],
             not_height: [],
-            abn_height: [],    
+            abn_height: [],
             dan_height: [],
             normal_height: 0,
             notice_height: 0,
             abnormal_height: 0,
             danger_height: 0,
+            identification_error: this.describe?.correction_mark
         }
     },
     mounted() {
-        this.GetTemperatureArray();
+        this.GetTemperatureArray()
+        this.identification_error = this.describe?.correction_mark
     },
     methods: {
         closeModal() {
-            this.$emit("close");
+            this.$emit('close')
         },
-        changeImage() {
-            this.$emit("change");
+        ChangeImage() {
+            console.log('ChangeImage')
+            this.$emit('change1')
+        },
+        check_error() {
+            console.log('Checkbox changed: ', this.identification_error, this.describe?._id)
+
+            this.axios.post('/tsmcserver/identification_error', {
+                _id: this.describe?._id,
+                correction_mark: this.identification_error
+            }).then((res) => {
+                console.log(res)
+                this.$emit('check_error_change')
+            }).catch((err) => {
+                console.log(err)
+            })
         },
         GetTemperatureArray() {
-            console.log("GetTemperatureArray")
+            console.log('GetTemperatureArray')
             console.log(this.describe?.category, this.describe?.result)
             if (this.describe?.category !== undefined && this.describe?.result !== undefined) {
-                this.axios.post('/tsmcserver/getTemperatureArray', {
-                    name: this.describe?.category || '',
-                    result: this.describe?.result || ''
-                }).then(res => {
-                    this.temperature_array = res.data;
-                    this.overallTmp = this.temperature_array?.overall_tmp;
-                    this.tmpArray = this.temperature_array?.tmp;
-                    this.nor_height = this.temperature_array?.normal_tmp;
-                    this.not_height = this.temperature_array?.notice_tmp;
-                    this.abn_height = this.temperature_array?.abnormal_tmp;
-                    this.dan_height = this.temperature_array?.danger_tmp;
-    
-                    this.calculateOverallPointerPosition();
-                    this.calculateIntervalPointerPosition();
-                    this.calculateIntervalBarHeight();
-                    this.calculateStateHeight();
-                }).catch(err => {
-                    console.log(err);
-                })
+                this.axios
+                    .post('/tsmcserver/getTemperatureArray', {
+                        name: this.describe?.category || '',
+                        result: this.describe?.result || ''
+                    })
+                    .then((res) => {
+                        this.temperature_array = res.data
+                        this.overallTmp = this.temperature_array?.overall_tmp
+                        this.tmpArray = this.temperature_array?.tmp
+                        this.nor_height = this.temperature_array?.normal_tmp
+                        this.not_height = this.temperature_array?.notice_tmp
+                        this.abn_height = this.temperature_array?.abnormal_tmp
+                        this.dan_height = this.temperature_array?.danger_tmp
+
+                        this.calculateOverallPointerPosition()
+                        this.calculateIntervalPointerPosition()
+                        this.calculateIntervalBarHeight()
+                        this.calculateStateHeight()
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                    })
             } else {
-                console.log("category or result is empty");
-                return; 
+                console.log('category or result is empty')
+                return
             }
         },
         calculateOverallPointerPosition() {
@@ -144,25 +181,27 @@ export default {
         },
         calculateIntervalPointerPosition() {
             const pt =
-                ((this.describe?.max - this.tmpArray[0]) /
-                    (this.tmpArray[1] - this.tmpArray[0])) * 100
+                ((this.describe?.max - this.tmpArray[0]) / (this.tmpArray[1] - this.tmpArray[0])) *
+                100
             this.interval_pointer = pt
         },
         calculateIntervalBarHeight() {
-            const pt = (this.tmpArray[1] - this.tmpArray[0])
+            const pt = this.tmpArray[1] - this.tmpArray[0]
             this.interval_barHeight = pt
         },
-        calculateStateHeight() {            
-            this.normal_height = ((this.nor_height[1] - this.nor_height[0]) / this.overallTmp) * 100;
-            this.notice_height = ((this.not_height[1] - this.not_height[0]) / this.overallTmp) * 100;
-            this.abnormal_height = ((this.abn_height[1] - this.abn_height[0]) / this.overallTmp) * 100;
-            this.danger_height = ((this.dan_height[1] - this.dan_height[0]) / this.overallTmp) * 100;
+        calculateStateHeight() {
+            this.normal_height = ((this.nor_height[1] - this.nor_height[0]) / this.overallTmp) * 100
+            this.notice_height = ((this.not_height[1] - this.not_height[0]) / this.overallTmp) * 100
+            this.abnormal_height =
+                ((this.abn_height[1] - this.abn_height[0]) / this.overallTmp) * 100
+            this.danger_height = ((this.dan_height[1] - this.dan_height[0]) / this.overallTmp) * 100
             // console.log(this.normal_height, this.notice_height, this.abnormal_height, this.danger_height);
-        },
-    },
+        }
+    }
 }
 </script>
-<style>
+
+<style scoped>
 /* .hidden {
     display: none !important;
 } */
@@ -193,9 +232,16 @@ export default {
 #category-title {
     margin: 0;
     display: grid;
-    grid-template-columns: 50px 1fr 35px;
+    grid-template-columns: 100px 1fr 100px;
     /* border: 1px solid black; */
+    position: relative;
+}
 
+#error_check {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #category-text {
@@ -212,7 +258,7 @@ export default {
     grid-column: 3;
     display: flex;
     align-items: center;
-    justify-content: start;
+    justify-content: space-around;
 }
 
 #details_con {

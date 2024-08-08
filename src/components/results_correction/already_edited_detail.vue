@@ -1,8 +1,14 @@
+<script setup>
+import { ElMessage, ElMessageBox } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
+</script>
+
 <template>
     <div id="modal0">
         <div class="modal-content0">
             <div id="content_header">
                 <p id="header_text">圖片名稱：{{ getImageName() }}</p>
+                <button type="button" class="btn-close" aria-label="Close" @click="close"></button>
             </div>
             <div id="content_body">
                 <div class="show_img" ref="showImg">
@@ -10,7 +16,6 @@
                         <img :src="src" loading="lazy" ref="image" @load="onImageLoad">
                         <canvas ref="canvas" class="canvas"></canvas>
                     </div>
-                    
                 </div>
                 <div class="operating_area">
                     <div class="config_table">
@@ -63,7 +68,7 @@
                 </div>
             </div>
             <div id="content_bottom">
-                <button class="cancel_btn" @click="cancel">取消修改</button>
+                <button class="cancel_btn" @click="delete_data">刪除此修改</button>
                 <button class="save_btn" @click="save">儲存修改</button>
             </div>
         </div>
@@ -72,10 +77,10 @@
 
 <script>
 export default {
-    props:{
+    props: {
         src: {
             type: String,
-            required: ''
+            required: true
         },
         details: {
             type: Object,
@@ -84,12 +89,20 @@ export default {
     },
     data() {
         return {
-            // 純功能操作==========================================================================
             tableData: [],
             device_name_list: [
                 { value: '電阻', label: '電阻' },
                 { value: '風扇', label: '風扇' },
-                { value: '馬達', label: '馬達' }
+                { value: '馬達', label: '馬達' },
+                { value: '表頭', label: '表頭' },
+                { value: 'PVC電纜', label: 'PVC電纜' },
+                { value: '指示燈', label: '指示燈' },
+                { value: '變壓器', label: '變壓器' },
+                { value: '斷路器', label: '斷路器' },
+                { value: '電容', label: '電容' },
+                { value: '繼電器', label: '繼電器' },
+                { value: '電磁接觸器', label: '電磁接觸器' },
+                { value: '熔絲', label: '熔絲' },
             ],
             device_option_name: '',
             isAdding: false,
@@ -101,42 +114,83 @@ export default {
             startX: 0,
             startY: 0,
             currentRect: null
-
-            // 資料回傳後==========================================================================
         };
     },
     watch: {
-        details: {     // 監聽describe的變化
-            handler() { // 當describe有變化時，執行以下function
+        details: {
+            handler() {
                 this.initializeTableData();
             },
-            deep: true  
+            deep: true
         }
     },
     mounted() {
-        // this.canvas = this.$refs.canvas;
-        // this.ctx = this.canvas.getContext('2d');
-        // this.updateCanvasSize();
-        // this.initializeTableData();
-        // window.addEventListener('resize', this.updateCanvasSize);
-
         this.canvas = this.$refs.canvas;
         this.ctx = this.canvas.getContext('2d');
         window.addEventListener('resize', this.updateCanvasSize);
-        // 確保在圖片加載後更新畫布尺寸和矩形框
-        this.$refs.image.addEventListener('load', this.onImageLoad);
         this.initializeTableData();
     },
     methods: {
-        cancel() {
+        close() {
             this.$emit('close');
         },
         save() {
-            this.$emit('close');
+            for (const item of this.tableData) {
+                if (!item.device_name || item.startX === null || item.startY === null || item.endX === null || item.endY === null) {
+                    ElMessage.error('請確認所有項目的名稱皆已填寫，方框皆確實繪製');
+                    return;
+                }
+            }
+
             console.log(this.tableData);
+
+            this.axios.post('/tsmcserver/updateResult', {
+                result_dataset: this.tableData,
+                image: this.src,
+                _id: this.details._id
+            }).then((res) => {
+                this.$emit('update_result');
+                this.$emit('close');
+                console.log('已修改detail', res);
+            }).catch((err) => {
+                console.log(err);
+            });
+        },
+        delete_data() {
+            ElMessageBox.confirm(
+                '確認要刪除此修改資料？',
+                '注意！！！',
+                {
+                    confirmButtonText: 'OK',
+                    cancelButtonText: 'Cancel',
+                    type: 'warning',
+                }
+            )
+            .then(() => {
+                console.log('delete');
+                this.axios.post('/tsmcserver/deleteResult', {
+                    _id: this.details._id,
+                    original_id: this.details.original_id
+                }).then((res) => {
+                    this.$emit('update_result');
+                    this.$emit('close');
+                    console.log('已刪除detail', res);
+                }).catch((err) => {
+                    console.log(err);
+                });
+                ElMessage({
+                    type: 'success',
+                    message: '刪除成功',
+                });
+            })
+            .catch(() => {
+                ElMessage({
+                    type: 'info',
+                    message: '取消刪除',
+                });
+            });
         },
         getImageName() {
-            // 從 src 中獲取文件名稱
             const fileName = this.src.split('\\').pop();
             return fileName;
         },
@@ -144,31 +198,30 @@ export default {
             if (this.details && this.details.result_dataset) {
                 this.details.result_dataset.forEach((item, index) => {
                     this.tableData.push({
-                        device_name: item.category || '',
+                        device_name: item.device_name || '',
                         number_id: this.item_number++, // 分配唯一編號
-                        startX: item.coordinate.xmin,
-                        startY: item.coordinate.ymin,
-                        endX: item.coordinate.xmax,
-                        endY: item.coordinate.ymax
+                        startX: item.startX,
+                        startY: item.startY,
+                        endX: item.endX,
+                        endY: item.endY
                     });
                     this.rectangles.push({
                         id: this.tableData[index].number_id,
-                        x: item.coordinate.xmin,
-                        y: item.coordinate.ymin,
-                        width: item.coordinate.xmax - item.coordinate.xmin,
-                        height: item.coordinate.ymax - item.coordinate.ymin
+                        x: item.startX,
+                        y: item.startY,
+                        width: item.endX - item.startX,
+                        height: item.endY - item.startY,
+                        isOriginal: item.isOriginal // 標記為原始矩形框
                     });
-                    this.drawRectangles();
                 });
+                this.onImageLoad();
                 this.onAddItem();
             }
         },
-// 功能操作區***************************************************************************************
         onAddItem() {
             const item_number = this.item_number++;
             this.tableData.push({
                 device_name: '',
-                
                 number_id: item_number, // 分配唯一編號
                 startX: null,
                 startY: null,
@@ -180,8 +233,9 @@ export default {
                 x: 0,
                 y: 0,
                 width: 0,
-                height: 0
-            }); // 初始化矩形框
+                height: 0,
+                isOriginal: false // 標記為新繪製的矩形框
+            });
             this.currentIndex = this.rectangles.length - 1;
         },
         deleteRow(index) {
@@ -194,21 +248,23 @@ export default {
             this.isAdding = true;
         },
         Confirm_add_device_name() {
-            this.device_name_list.push({
-                value: this.device_option_name,
-                label: this.device_option_name
-            });
-            this.cancel_add_device_name();
+            if (this.device_option_name) {
+                this.device_name_list.push({
+                    value: this.device_option_name,
+                    label: this.device_option_name
+                });
+                this.cancel_add_device_name();
+            } else {
+                ElMessage.error('選項名稱不能為空');
+            }
         },
         cancel_add_device_name() {
             this.device_option_name = '';
             this.isAdding = false;
         },
-        // 繪製方框==========================================================================
         onImageLoad() {
-            console.log('image loaded');
             this.updateCanvasSize();
-            this.drawRectangles();  // 確保圖片加載後繪製矩形框
+            this.drawRectangles();
             this.canvas.addEventListener('mousedown', this.onMouseDown);
             this.canvas.addEventListener('mousemove', this.onMouseMove);
             this.canvas.addEventListener('mouseup', this.onMouseUp);
@@ -247,15 +303,10 @@ export default {
         },
         onMouseUp(e) {
             if (this.drawing) {
-                // const lastIndex = this.rectangles.length - 1;
-                // // this.rectangles[lastIndex] = this.currentRect;
-                // this.rectangles[lastIndex] = { ...this.currentRect, id: this.rectangles[lastIndex].id };
-                // this.drawing = false;
-
                 const rect = this.canvas.getBoundingClientRect();
                 const endX = e.clientX - rect.left;
                 const endY = e.clientY - rect.top;
-                
+
                 if (this.currentIndex !== -1) {
                     this.rectangles[this.currentIndex] = { ...this.currentRect, id: this.rectangles[this.currentIndex].id };
                     this.tableData[this.currentIndex].startX = this.startX;
@@ -268,23 +319,40 @@ export default {
             }
         },
         drawRectangles() {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.rectangles.forEach(rect => {
-                if (rect) {
-                    // console.log(`Drawing rectangle ID: ${rect.id}`, rect);  // 調試信息
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+            this.drawOriginalRectangles() // 繪製原始方框
+            this.drawNewRectangles() // 繪製新方框
+        },
+        drawNewRectangles() {
+            // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.rectangles.forEach((rect) => {
+                if (!rect.isOriginal) {
+                    this.ctx.lineWidth = 2
                     this.ctx.strokeStyle = 'red';
                     this.ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
-                    this.ctx.fillStyle = 'red';
-                    this.ctx.font = '16px Arial';
-                    // console.log(`Drawing text at (${rect.x + 2}, ${rect.y + 16}): ID: ${rect.id}`);  // 調試信息
+                    this.ctx.fillStyle = 'black';
+                    this.ctx.font = 'bold 20px Arial';
                     this.ctx.fillText(rect.id, rect.x + 2, rect.y + 16);
                 }
-            });
+            })
+        },
+        drawOriginalRectangles() {
+            // this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.rectangles.forEach((rect) => {
+                if (rect.isOriginal) {
+                    this.ctx.lineWidth = 3
+                    this.ctx.strokeStyle = 'rgb(200, 200, 200)';
+                    this.ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+                    this.ctx.fillStyle = 'black';
+                    this.ctx.font = 'bold 20px Arial';
+                    this.ctx.fillText(rect.id, rect.x + 2, rect.y + 16);
+                }
+            })
         }
     },
-    // beforeDestroy() {
-    //     window.removeEventListener('resize', this.updateCanvasSize);
-    // }
+    beforeDestroy() {
+        window.removeEventListener('resize', this.updateCanvasSize);
+    }
 };
 </script>
 
@@ -313,9 +381,8 @@ export default {
 }
 #content_header {
     margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 40px;
 }
 #header_text {
     margin: 0;
